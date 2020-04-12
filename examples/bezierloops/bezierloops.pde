@@ -1,3 +1,4 @@
+import gsynlib.utils.*;
 import gsynlib.bezier.*;
 
 BezierLoop loop;
@@ -10,7 +11,10 @@ int seed = 0;
 
 void setup() {
   size(600,600);
-  loop = new BezierLoop(this);
+  
+  GApp.setApp(this);
+  
+  loop = new BezierLoop();
   init();
 }
 

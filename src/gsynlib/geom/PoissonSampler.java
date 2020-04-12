@@ -1,5 +1,5 @@
 package gsynlib.geom;
-
+import gsynlib.base.*;
 import java.util.*;
 import processing.core.*;
 
@@ -8,7 +8,7 @@ import processing.core.*;
  * @author gsynuh
  * Fake Poisson Disc sampler. each getPoint() returns an unsed point in the list. Used first in the bezier loop sketch.
  */
-public class PoissonSampler {
+public class PoissonSampler extends GsynlibBase {
 
 	Bounds bounds;
 	float minRadius = 10;
@@ -18,10 +18,8 @@ public class PoissonSampler {
 
 	ArrayList<PVector> searchBuffer;
 
-	PApplet app;
 
-	public PoissonSampler(PApplet _app) {
-		this.app = _app;
+	public PoissonSampler() {
 
 		bounds = new Bounds();
 		points = new ArrayList<PVector>();
@@ -66,8 +64,8 @@ public class PoissonSampler {
 				pos.x += minRadius / 2;
 				pos.y += minRadius / 2;
 
-				pos.x += app.random(-minRadius / 8, minRadius / 8);
-				pos.y += app.random(-minRadius / 8, minRadius / 8);
+				pos.x += g().random(-minRadius / 8, minRadius / 8);
+				pos.y += g().random(-minRadius / 8, minRadius / 8);
 
 				points.add(pos);
 				pointsTaken.add(false);
@@ -116,12 +114,12 @@ public class PoissonSampler {
 		}
 
 		if (searchBuffer.size() == 0) {
-			foundPoint = points.get((int) PApplet.floor(app.random(0, points.size())));
+			foundPoint = points.get((int) PApplet.floor(g().random(0, points.size())));
 			return foundPoint;
 		}
 
 		do {
-			int index = (int) PApplet.floor(app.random(0, searchBuffer.size()));
+			int index = (int) PApplet.floor(g().random(0, searchBuffer.size()));
 			PVector p = searchBuffer.get(index);
 			foundPoint = p;
 		} while (foundPoint == null);
@@ -137,10 +135,10 @@ public class PoissonSampler {
 		do {
 
 			if (AllPointsTaken()) {
-				foundPoint = points.get((int) PApplet.floor(app.random(points.size())));
+				foundPoint = points.get((int) PApplet.floor(g().random(points.size())));
 			} else {
 
-				int index = (int) PApplet.floor(app.random(0, points.size()));
+				int index = (int) PApplet.floor(g().random(0, points.size()));
 
 				if (!IsPointIndexTaken(index)) {
 					PVector p = points.get(index);
@@ -155,13 +153,13 @@ public class PoissonSampler {
 	}
 
 	public void renderDebug() {
-		app.noStroke();
+		g().noStroke();
 		for (int i = 0; i < points.size(); i++) {
 			PVector p = points.get(i);
 			Boolean taken = pointsTaken.get(i);
-			app.fill(taken ? 220 : 130);
+			g().fill(taken ? 220 : 130);
 			float r = taken ? 10 : 4;
-			app.ellipse(p.x, p.y, r, r);
+			g().ellipse(p.x, p.y, r, r);
 		}
 	}
 }

@@ -1,16 +1,16 @@
 package gsynlib.bezier;
 
+import gsynlib.base.*;
 import gsynlib.geom.*;
 import java.util.*;
 import processing.core.*;
 
-public class BezierLoop {
+public class BezierLoop extends GsynlibBase {
 
 	public Bounds bounds;
 	public float bakePrecision = 20;
 
 	PoissonSampler poisson;
-	PApplet app;
 
 	float w;
 	float h;
@@ -19,9 +19,8 @@ public class BezierLoop {
 	ArrayList<CurveSegment> curves = new ArrayList<CurveSegment>();
 	ArrayList<PVector> points = new ArrayList<PVector>();
 
-	public BezierLoop(PApplet _app) {
-		this.app = _app;
-		poisson = new PoissonSampler(this.app);
+	public BezierLoop() {
+		poisson = new PoissonSampler();
 	}
 
 	public void init(float numCurves, float _w, float _h, float _m) {
@@ -44,11 +43,11 @@ public class BezierLoop {
 		PVector tangentTarget = poisson.getPointNeighboor(p1, maxTangentDistance);
 
 		float tanAngle = tangentTarget.sub(p1).heading() - PApplet.PI;
-		float tanRadius = app.random(minTangentDistance, maxTangentDistance * 2);
+		float tanRadius = g().random(minTangentDistance, maxTangentDistance * 2);
 
 		for (int i = 0; i < numCurves; i++) {
 
-			CurveSegment cs = new CurveSegment(this.app,i);
+			CurveSegment cs = new CurveSegment(i);
 
 			PVector p4 = poisson.getPoint();
 
@@ -58,7 +57,7 @@ public class BezierLoop {
 			float a = tangentTarget.sub(p4).heading() - PApplet.PI;
 
 			cs.setTrangent(0, tanAngle, tanRadius); // ALIGN WITH PREVIOUS
-			cs.setTrangent(1, a, app.random(minTangentDistance, maxTangentDistance * 2));
+			cs.setTrangent(1, a, g().random(minTangentDistance, maxTangentDistance * 2));
 
 			p1 = cs.p4;
 			tanAngle = cs.t2.heading() - PApplet.PI;
@@ -70,7 +69,7 @@ public class BezierLoop {
 		// ADD CLOSING CURVE
 		CurveSegment csB = curves.get(curves.size() - 1);
 		CurveSegment csA = curves.get(0);
-		CurveSegment csClose = new CurveSegment(this.app,(int) numCurves);
+		CurveSegment csClose = new CurveSegment((int) numCurves);
 
 		csClose.initialize(csB.p4, csA.p1);
 		csClose.setTrangent(0, csB.t2.heading() - PApplet.PI, csB.t2.mag());
@@ -118,38 +117,38 @@ public class BezierLoop {
 	}
 
 	public void render() {
-		app.pushMatrix();
+		g().pushMatrix();
 		for (int i = 0; i < curves.size(); i++) {
 			CurveSegment cs = curves.get(i);
 			cs.render();
 		}
-		app.popMatrix();
+		g().popMatrix();
 	}
 
 	public void renderBake() {
-		app.pushMatrix();
-		app.noFill();
-		app.stroke(0);
-		app.strokeWeight(1);
-		app.beginShape();
+		g().pushMatrix();
+		g().noFill();
+		g().stroke(0);
+		g().strokeWeight(1);
+		g().beginShape();
 		for (int i = 0; i < points.size(); i++) {
 			PVector p = points.get(i);
-			app.vertex(p.x, p.y);
+			g().vertex(p.x, p.y);
 		}
 
-		app.endShape(PApplet.OPEN);
-		app.popMatrix();
+		g().endShape(PApplet.OPEN);
+		g().popMatrix();
 	}
 
 	public void renderDebug() {
-		app.pushMatrix();
+		g().pushMatrix();
 		poisson.renderDebug();
 
 		for (int i = 0; i < curves.size(); i++) {
 			CurveSegment cs = curves.get(i);
 			cs.renderDebug();
 		}
-		app.popMatrix();
+		g().popMatrix();
 	}
 
 	void moveAndScaleCurve() {

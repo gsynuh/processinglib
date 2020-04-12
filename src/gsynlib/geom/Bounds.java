@@ -1,8 +1,8 @@
 package gsynlib.geom;
-
+import gsynlib.base.*;
 import processing.core.*;
 
-public class Bounds {
+public class Bounds extends GsynlibBase {
 	
 	float minA = -100000;
 	float maxA = 100000;
@@ -36,6 +36,13 @@ public class Bounds {
 		this.position.set(b.position);
 		this.size.set(b.size);
 	}
+	
+	public PVector getRandom() {
+		return new PVector(
+				position.x + g().random(0,size.x),
+				position.y + g().random(0,size.y)
+				);
+	}
 
 	public PVector getCenter() {
 		PVector p = new PVector();
@@ -52,8 +59,8 @@ public class Bounds {
 		this.Encapsulate(new Bounds(p));
 	}
 
-	PVector horizontal = new PVector();
-	PVector vertical = new PVector();
+	static PVector horizontal = new PVector();
+	static PVector vertical = new PVector();
 
 	public void set(Bounds b) {
 		this.position.set(b.position);
