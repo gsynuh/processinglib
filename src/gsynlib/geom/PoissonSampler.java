@@ -2,7 +2,7 @@ package gsynlib.geom;
 import gsynlib.base.*;
 import java.util.*;
 import processing.core.*;
-
+import static processing.core.PApplet.*;
 
 /**
  * @author gsynuh
@@ -53,8 +53,8 @@ public class PoissonSampler extends GsynlibBase {
 		points.clear();
 		pointsTaken.clear();
 
-		int divX = PApplet.floor(bounds.size.x / minRadius) + 2;
-		int divY = PApplet.floor(bounds.size.y / minRadius) + 2;
+		int divX = floor(bounds.size.x / minRadius) + 2;
+		int divY = floor(bounds.size.y / minRadius) + 2;
 
 		for (int gridX = 0; gridX < divX; gridX++) {
 			for (int gridY = 0; gridY < divY; gridY++) {
@@ -114,12 +114,12 @@ public class PoissonSampler extends GsynlibBase {
 		}
 
 		if (searchBuffer.size() == 0) {
-			foundPoint = points.get((int) PApplet.floor(app().random(0, points.size())));
+			foundPoint = points.get((int) floor(app().random(0, points.size())));
 			return foundPoint;
 		}
 
 		do {
-			int index = PApplet.floor(app().random(0, searchBuffer.size()));
+			int index = floor(app().random(0, searchBuffer.size()));
 			PVector p = searchBuffer.get(index);
 			foundPoint = p;
 		} while (foundPoint == null);
@@ -135,10 +135,10 @@ public class PoissonSampler extends GsynlibBase {
 		do {
 
 			if (AllPointsTaken()) {
-				foundPoint = points.get(PApplet.floor(app().random(points.size())));
+				foundPoint = points.get(floor(app().random(points.size())));
 			} else {
 
-				int index = PApplet.floor(app().random(0, points.size()));
+				int index = floor(app().random(0, points.size()));
 
 				if (!IsPointIndexTaken(index)) {
 					PVector p = points.get(index);

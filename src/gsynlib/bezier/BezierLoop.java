@@ -4,6 +4,7 @@ import gsynlib.base.*;
 import gsynlib.geom.*;
 import java.util.*;
 import processing.core.*;
+import static processing.core.PApplet.*;
 
 public class BezierLoop extends GsynlibBase {
 
@@ -42,7 +43,7 @@ public class BezierLoop extends GsynlibBase {
 		PVector p1 = poisson.getPoint();
 		PVector tangentTarget = poisson.getPointNeighboor(p1, maxTangentDistance);
 
-		float tanAngle = tangentTarget.sub(p1).heading() - PApplet.PI;
+		float tanAngle = tangentTarget.sub(p1).heading() - PI;
 		float tanRadius = app().random(minTangentDistance, maxTangentDistance * 2);
 
 		for (int i = 0; i < numCurves; i++) {
@@ -54,13 +55,13 @@ public class BezierLoop extends GsynlibBase {
 			cs.initialize(p1, p4);
 
 			tangentTarget = poisson.getPointNeighboor(p4, maxTangentDistance * 2);
-			float a = tangentTarget.sub(p4).heading() - PApplet.PI;
+			float a = tangentTarget.sub(p4).heading() - PI;
 
 			cs.setTrangent(0, tanAngle, tanRadius); // ALIGN WITH PREVIOUS
 			cs.setTrangent(1, a, app().random(minTangentDistance, maxTangentDistance * 2));
 
 			p1 = cs.p4;
-			tanAngle = cs.t2.heading() - PApplet.PI;
+			tanAngle = cs.t2.heading() - PI;
 			tanRadius = cs.t2.mag();
 
 			curves.add(cs);
@@ -72,8 +73,8 @@ public class BezierLoop extends GsynlibBase {
 		CurveSegment csClose = new CurveSegment((int) numCurves);
 
 		csClose.initialize(csB.p4, csA.p1);
-		csClose.setTrangent(0, csB.t2.heading() - PApplet.PI, csB.t2.mag());
-		csClose.setTrangent(1, csA.t1.heading() - PApplet.PI, csA.t1.mag());
+		csClose.setTrangent(0, csB.t2.heading() - PI, csB.t2.mag());
+		csClose.setTrangent(1, csA.t1.heading() - PI, csA.t1.mag());
 
 		curves.add(csClose);
 
@@ -101,15 +102,15 @@ public class BezierLoop extends GsynlibBase {
 	
 	public PVector sampleCurve(float t) {
 
-		t = PApplet.constrain(t, 0, 1);
+		t = constrain(t, 0, 1);
 
 		float timeDiv = 1.0f / (curves.size());
-		float curveIndex = PApplet.floor(t * curves.size());
+		float curveIndex = floor(t * curves.size());
 
 		if (curveIndex >= curves.size())
 			curveIndex = curves.size() - 1;
 
-		float t2 = PApplet.map(t, curveIndex * timeDiv, (curveIndex + 1) * timeDiv, 0, 1);
+		float t2 = map(t, curveIndex * timeDiv, (curveIndex + 1) * timeDiv, 0, 1);
 
 		CurveSegment cs = curves.get((int) curveIndex);
 		PVector p = cs.sampleCurve(t2, false);
@@ -136,7 +137,7 @@ public class BezierLoop extends GsynlibBase {
 			app().vertex(p.x, p.y);
 		}
 
-		app().endShape(PApplet.OPEN);
+		app().endShape(OPEN);
 		app().popMatrix();
 	}
 

@@ -1,6 +1,7 @@
 package gsynlib.geom;
 import gsynlib.base.*;
 import processing.core.*;
+import static processing.core.PApplet.*;
 
 public class Bounds extends GsynlibBase {
 	
@@ -80,17 +81,17 @@ public class Bounds extends GsynlibBase {
 		if (b == null)
 			return;
 
-		horizontal.x = PApplet.min(maxA, this.position.x);
-		horizontal.x = PApplet.min(horizontal.x, b.position.x);
+		horizontal.x = min(maxA, this.position.x);
+		horizontal.x = min(horizontal.x, b.position.x);
 
-		vertical.x = PApplet.min(maxA, this.position.y);
-		vertical.x = PApplet.min(vertical.x, b.position.y);
+		vertical.x = min(maxA, this.position.y);
+		vertical.x = min(vertical.x, b.position.y);
 
-		horizontal.y = PApplet.max(minA, this.position.x + this.size.x);
-		horizontal.y = PApplet.max(horizontal.y, b.position.x + b.size.x);
+		horizontal.y = max(minA, this.position.x + this.size.x);
+		horizontal.y = max(horizontal.y, b.position.x + b.size.x);
 
-		vertical.y = PApplet.max(minA, this.position.y + this.size.y);
-		vertical.y = PApplet.max(vertical.y, b.position.y + b.size.y);
+		vertical.y = max(minA, this.position.y + this.size.y);
+		vertical.y = max(vertical.y, b.position.y + b.size.y);
 
 		this.position.x = horizontal.x;
 		this.position.y = vertical.x;

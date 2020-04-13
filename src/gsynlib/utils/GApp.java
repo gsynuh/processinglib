@@ -2,6 +2,7 @@ package gsynlib.utils;
 
 import gsynlib.base.GsynlibBase;
 import processing.core.PApplet;
+import static processing.core.PApplet.*;
 
 public class GApp {
 
@@ -10,7 +11,7 @@ public class GApp {
 	public static void set(PApplet _app) {
 
 		if (verbose)
-			System.out.println("GApp set " + _app);
+			println("GApp set " + _app);
 
 		GsynlibBase._app = _app;
 	}

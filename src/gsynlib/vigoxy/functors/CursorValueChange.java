@@ -3,6 +3,7 @@ package gsynlib.vigoxy.functors;
 import gsynlib.scheduling.Functor;
 import gsynlib.vigoxy.PlotterXY;
 import processing.core.*;
+import static processing.core.PApplet.*;
 
 public class CursorValueChange extends Functor {
 	PVector ref;
@@ -33,8 +34,8 @@ public class CursorValueChange extends Functor {
 
 	public void execute() {
 		super.execute();
-		this.ref.x = PApplet.lerp(this.from.x, this.to.x, this.currentRunTime);
-		this.ref.y = PApplet.lerp(this.from.y, this.to.y, this.currentRunTime);
+		this.ref.x = lerp(this.from.x, this.to.x, this.currentRunTime);
+		this.ref.y = lerp(this.from.y, this.to.y, this.currentRunTime);
 
 		if (this.currentRunTime >= this.runTime - 0.001) {
 			this.ref.x = this.to.x;

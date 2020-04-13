@@ -3,6 +3,7 @@ package gsynlib.vigoxy.functors;
 import gsynlib.scheduling.*;
 import processing.core.*;
 import processing.serial.*;
+import static processing.core.PApplet.*;
 
 public class MessageSender extends Functor {
 	
@@ -26,7 +27,7 @@ public class MessageSender extends Functor {
 	public void execute() {
 		
 		if(verbose)
-			PApplet.println("MessageSender : " + new String(msg));
+			println("MessageSender : " + new String(msg));
 		
 		this.serial.write(msg);
 	}

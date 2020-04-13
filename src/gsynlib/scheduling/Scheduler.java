@@ -5,7 +5,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import gsynlib.base.*;
-import processing.core.PApplet;
+import static processing.core.PApplet.*;
 
 public class Scheduler extends GsynlibBase {
 
@@ -50,7 +50,7 @@ public class Scheduler extends GsynlibBase {
 		}
 
 		if (externalRunMethod == null) {
-			PApplet.println("Cannot find '" + methodName + "' method on " + this.externalTask);
+			println("Cannot find '" + methodName + "' method on " + this.externalTask);
 			this.externalTask = null;
 		}
 	}
@@ -58,7 +58,7 @@ public class Scheduler extends GsynlibBase {
 	public void start(int freq) {
 
 		if (this.externalTask == null) {
-			PApplet.println(
+			println(
 					"Cannot start without task. define an object and its method name to be called using setTask.");
 			return;
 		}
@@ -67,7 +67,7 @@ public class Scheduler extends GsynlibBase {
 
 		if (task != null) {
 			timer.scheduleAtFixedRate(task, 0, freq);
-			PApplet.println(
+			println(
 					"Scheduler started " + name + " at freq " +freq);
 			running = true;
 		}
@@ -91,7 +91,7 @@ public class Scheduler extends GsynlibBase {
 	public void execute() {
 
 		if (this.externalTask == null) {
-			PApplet.println("NO EXTERNAL TASK" + app().millis());
+			println("NO EXTERNAL TASK" + app().millis());
 			return;
 		}
 

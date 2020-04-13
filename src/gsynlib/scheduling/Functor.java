@@ -1,6 +1,6 @@
 package gsynlib.scheduling;
 
-import processing.core.*;
+import static processing.core.PApplet.*;
 
 public class Functor {
 	public long startTime = 0;
@@ -41,7 +41,7 @@ public class Functor {
 		float dtimeF = ms * 0.001f;
 
 		if (runTime > 0)
-			currentRunTime = PApplet.map(dtimeF - 0.01f, 0, runTime, 0, 1);
+			currentRunTime = map(dtimeF - 0.01f, 0, runTime, 0, 1);
 		else
 			currentRunTime = 0;
 

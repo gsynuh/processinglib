@@ -1,8 +1,6 @@
 package gsynlib.vigoxy;
 
 import java.util.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import gsynlib.base.GsynlibBase;
 
@@ -10,8 +8,10 @@ import gsynlib.scheduling.*;
 import gsynlib.utils.GApp;
 import gsynlib.vigoxy.functors.*;
 import jssc.*;
-import processing.serial.*;
 import processing.core.*;
+import processing.serial.*;
+import static processing.core.PApplet.*;
+
 
 //PlotterXY sends GCODE command to serial
 //Made with the commands of Vigo Tec's writer/engraver in mind
@@ -77,13 +77,13 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 			if(serialPort.port.removeEventListener()) {
 				serialPort.port.addEventListener(this);
 			}else {
-				PApplet.println("Couldn't remove port listener");
+				println("Couldn't remove port listener");
 			}
 		} catch (SerialPortException e) {
 			e.printStackTrace();
 		}
 
-		PApplet.println("Plotter uses device at " + _serialPortName);
+		println("Plotter uses device at " + _serialPortName);
 
 		scheduler = new Scheduler();
 		scheduler.name = "PlotterXY_Scheduler";
@@ -205,9 +205,9 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 				if (info.contains("Pos:")) {
 
 					String[] poss = info.split(":")[1].split(",");
-					float x = PApplet.parseFloat(poss[0]);
-					float y = PApplet.parseFloat(poss[1]);
-					float z = PApplet.parseFloat(poss[2]);
+					float x = parseFloat(poss[0]);
+					float y = parseFloat(poss[1]);
+					float z = parseFloat(poss[2]);
 
 					motorPosition.x = x;
 					motorPosition.y = y;
@@ -239,7 +239,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	}
 	
 	public void penUp() {
-		PApplet.println("PEN UP");
+		println("PEN UP");
 		send("M5");
 		send("G4 1000");
 		QueueCommand(new Functor() {
@@ -251,7 +251,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	}
 
 	public void penReset() {
-		PApplet.println("PEN RESET");
+		println("PEN RESET");
 		send("S800");
 		send("G4 1000");
 		QueueCommand(new Functor() {
@@ -263,7 +263,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	}
 
 	public void penDown() {
-		PApplet.println("PEN DOWN");
+		println("PEN DOWN");
 		send("M3 S950");
 		send("G4 1000");
 		QueueCommand(new Functor() {
@@ -326,7 +326,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	
 	float precision = 1000;
 	public String setFloatPrecision(float value) {
-		float v = PApplet.round(value * precision) / precision;
+		float v = round(value * precision) / precision;
 		return formatStringForMessage(v);
 	}
 

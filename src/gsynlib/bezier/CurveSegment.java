@@ -4,6 +4,7 @@ import gsynlib.base.*;
 import gsynlib.geom.*;
 
 import processing.core.*;
+import static processing.core.PApplet.*;
 
 public class CurveSegment extends GsynlibBase {
 
@@ -37,8 +38,8 @@ public class CurveSegment extends GsynlibBase {
 		PVector tp = i == 0 ? this.p2 : this.p3;
 		PVector p = i == 0 ? this.p1 : this.p4;
 
-		helper.x = PApplet.cos(angle) * dist;
-		helper.y = PApplet.sin(angle) * dist;
+		helper.x = cos(angle) * dist;
+		helper.y = sin(angle) * dist;
 		helper.add(p);
 
 		tp.set(helper);
@@ -59,7 +60,7 @@ public class CurveSegment extends GsynlibBase {
 		float x = 0;
 		float y = 0;
 
-		t = PApplet.constrain(t, 0, 1);
+		t = constrain(t, 0, 1);
 
 		if (reverse) {
 			x = app().bezierPoint(p4.x, p3.x, p2.x, p1.x, t);
