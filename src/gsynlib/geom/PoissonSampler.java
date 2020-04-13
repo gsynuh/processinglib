@@ -11,7 +11,7 @@ import static processing.core.PApplet.*;
 public class PoissonSampler extends GsynlibBase {
 
 	Bounds bounds;
-	float minRadius = 10;
+	float gridSize = 10;
 
 	ArrayList<PVector> points;
 	ArrayList<Boolean> pointsTaken;
@@ -24,14 +24,13 @@ public class PoissonSampler extends GsynlibBase {
 		bounds = new Bounds();
 		points = new ArrayList<PVector>();
 		pointsTaken = new ArrayList<Boolean>();
-
 		searchBuffer = new ArrayList<PVector>();
 	}
 
-	public void init(float _rad, float _x, float _y, float _w, float _h) {
+	public void init(float _gridSize, float _x, float _y, float _w, float _h) {
 		bounds.position.set(_x, _y);
 		bounds.size.set(_w, _h);
-		minRadius = _rad;
+		this.gridSize = _gridSize;
 		build();
 	}
 	
@@ -52,20 +51,24 @@ public class PoissonSampler extends GsynlibBase {
 	void build() {
 		points.clear();
 		pointsTaken.clear();
+		
+		float boundSize = bounds.size.x < bounds.size.y ? bounds.size.x : bounds.size.y;
+		
+		float divSize = boundSize / this.gridSize;
 
-		int divX = floor(bounds.size.x / minRadius) + 2;
-		int divY = floor(bounds.size.y / minRadius) + 2;
+		for (int gridX = 0; gridX < this.gridSize; gridX++) {
+			for (int gridY = 0; gridY < this.gridSize; gridY++) {
 
-		for (int gridX = 0; gridX < divX; gridX++) {
-			for (int gridY = 0; gridY < divY; gridY++) {
+				PVector pos = new PVector(gridX * divSize, gridY * divSize);
+				
+				pos.x += bounds.position.x;
+				pos.y += bounds.position.y;
 
-				PVector pos = new PVector(gridX * minRadius, gridY * minRadius);
+				pos.x += divSize / 2;
+				pos.y += divSize / 2;
 
-				pos.x += minRadius / 2;
-				pos.y += minRadius / 2;
-
-				pos.x += app().random(-minRadius / 8, minRadius / 8);
-				pos.y += app().random(-minRadius / 8, minRadius / 8);
+				pos.x += app().random(-divSize / 8, divSize / 8);
+				pos.y += app().random(-divSize / 8, divSize / 8);
 
 				points.add(pos);
 				pointsTaken.add(false);

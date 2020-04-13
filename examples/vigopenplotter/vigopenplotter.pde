@@ -31,8 +31,9 @@ void setup() {
 
 void draw() {
   background(255);
+  noStroke();
   
-   if (!plotter.initialized || plotter.getCommandCount() >0)
+  if (!plotter.initialized || plotter.getCommandCount() >0) //these are the initialization and "busy" combined conditions.
   {
     fill(255, 0, 0);
   } else {
@@ -46,6 +47,7 @@ void draw() {
   fill(0);
   text("CUR X " + cursor.x + " Y " + cursor.y, 20, 32);
   text("MOT X " + mot.x + " Y " + mot.y, 20, 45);
+  if(!plotter.initialized) text("CONTACTING PLOTTER....\nPLEASE WAIT UNTIL THE RECTANGLE GOES GREEN !", 20, height - 32);
 }
 
 void keyReleased() {
@@ -55,7 +57,9 @@ void keyReleased() {
 Boolean isKeyDown = false;
 void keyPressed() {
 
+  //Don't accept key presses if plotter is not ready.
   if (!plotter.initialized)return;
+  //prevent OS based consecutive key presses when key is held down.
   if (isKeyDown)return;
 
   isKeyDown = true;

@@ -14,8 +14,8 @@ public class Bounds extends GsynlibBase {
 	public Boolean dirty = true;
 
 	public Bounds() {
-		position.x = position.y = 0;
-		size.x = size.y = 10;
+		position.x = position.y = -100;
+		size.x = size.y = 200;
 	}
 
 	public Bounds(PVector p) {
@@ -24,6 +24,11 @@ public class Bounds extends GsynlibBase {
 		position.x -= m;
 		position.y -= m;
 		size.set(m * 2, m * 2);
+	}
+	
+	public Bounds(PVector _pos, PVector _size) {
+		position.set(_pos);
+		size.set(_size);
 	}
 
 	public Bounds(float _x, float _y, float _w, float _h) {

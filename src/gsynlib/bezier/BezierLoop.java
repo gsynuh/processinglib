@@ -8,37 +8,67 @@ import static processing.core.PApplet.*;
 
 public class BezierLoop extends GsynlibBase {
 
+	Bounds targetBounds = new Bounds();
+	
 	public Bounds bounds;
 	public float bakePrecision = 20;
 
 	PoissonSampler poisson;
 
-	float w;
-	float h;
 	float m;
 
 	ArrayList<CurveSegment> curves = new ArrayList<CurveSegment>();
 	ArrayList<PVector> points = new ArrayList<PVector>();
+	
+	public ArrayList<CurveSegment> getCurves() {
+		return this.curves;
+	}
+	
+	public ArrayList<PVector> getBakedPoints() {
+		return this.points;
+	}
 
 	public BezierLoop() {
 		poisson = new PoissonSampler();
+		setDefaultTargetBounds();
+		targetBounds.dirty = false;
+	}
+	
+	public void setTargetBounds(Bounds b) {
+		targetBounds.copyFrom(b);
+		targetBounds.dirty = true;
+	}
+	
+	void setDefaultTargetBounds() {
+		targetBounds.position.set(0,0);
+		targetBounds.size.set(app().width,app().height);
 	}
 
-	public void init(float numCurves, float _w, float _h, float _m) {
+	public void init(float numCurves, float _m) {
 
-		this.w = _w;
-		this.h = _h;
+		if(!targetBounds.dirty) {
+			setDefaultTargetBounds();
+		}
+		
 		this.m = _m;
-
+		
+		println("BezierLoop init numCruves:",numCurves);
+		
 		curves.clear();
 		points.clear();
 
-		float minTangentDistance = this.w;
-		float maxTangentDistance = this.w * 1.6f;
-
-		float poissonRadius = minTangentDistance;
-		poisson.init(poissonRadius, -maxTangentDistance, -maxTangentDistance, maxTangentDistance * 2,
-				maxTangentDistance * 2);
+		float maxDist = this.targetBounds.size.x > this.targetBounds.size.y ? this.targetBounds.size.y : this.targetBounds.size.x;
+		
+		float minTangentDistance = maxDist * 0.8f;
+		float maxTangentDistance = maxDist * 1.2f;
+		
+		float numPointsNeededPerCurve = numCurves * 2 + 1;
+		
+		poisson.init(numPointsNeededPerCurve, 
+				this.targetBounds.position.x - maxDist, 
+				this.targetBounds.position.y - maxDist,
+				this.targetBounds.size.x + maxDist*2,
+				this.targetBounds.size.y + maxDist*2);
 
 		PVector p1 = poisson.getPoint();
 		PVector tangentTarget = poisson.getPointNeighboor(p1, maxTangentDistance);
@@ -94,10 +124,6 @@ public class BezierLoop extends GsynlibBase {
 		bounds.position.y -= m;
 		bounds.size.x += m * 2;
 		bounds.size.y += m * 2;
-	}
-
-	public ArrayList<CurveSegment> getCurves() {
-		return this.curves;
 	}
 	
 	public PVector sampleCurve(float t) {
@@ -156,7 +182,7 @@ public class BezierLoop extends GsynlibBase {
 		PVector sizeDiv = bounds.position.copy();
 		sizeDiv.mult(-1);
 
-		PVector s = new PVector(w, h);
+		PVector s = new PVector(targetBounds.size.x, targetBounds.size.y);
 		s.x = s.x / bounds.size.x;
 		s.y = s.y / bounds.size.y;
 
@@ -173,6 +199,12 @@ public class BezierLoop extends GsynlibBase {
 
 			p.x *= s.x;
 			p.y *= s.y;
+		}
+		
+		for (int i = 0; i < points.size(); i++) {
+			PVector p = points.get(i);
+			p.x += targetBounds.position.x;
+			p.y += targetBounds.position.y;
 		}
 
 		poisson.translatePoints(sizeDiv);
