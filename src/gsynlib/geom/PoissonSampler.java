@@ -119,7 +119,7 @@ public class PoissonSampler extends GsynlibBase {
 		}
 
 		do {
-			int index = (int) PApplet.floor(g().random(0, searchBuffer.size()));
+			int index = PApplet.floor(g().random(0, searchBuffer.size()));
 			PVector p = searchBuffer.get(index);
 			foundPoint = p;
 		} while (foundPoint == null);
@@ -135,10 +135,10 @@ public class PoissonSampler extends GsynlibBase {
 		do {
 
 			if (AllPointsTaken()) {
-				foundPoint = points.get((int) PApplet.floor(g().random(points.size())));
+				foundPoint = points.get(PApplet.floor(g().random(points.size())));
 			} else {
 
-				int index = (int) PApplet.floor(g().random(0, points.size()));
+				int index = PApplet.floor(g().random(0, points.size()));
 
 				if (!IsPointIndexTaken(index)) {
 					PVector p = points.get(index);

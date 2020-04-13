@@ -1,5 +1,7 @@
 package gsynlib.utils;
 
+import java.util.*;
+
 import gsynlib.base.GsynlibBase;
 import processing.core.PApplet;
 
@@ -14,11 +16,7 @@ public class GApp {
 		
 		GsynlibBase._app = _app;
 	}
-	
-	public static PApplet tryGetApp() {
-		return null;
-	}
-	
+
 	public static String asciiToHex(String asciiStr) {
 	    char[] chars = asciiStr.toCharArray();
 	    StringBuilder hex = new StringBuilder();

@@ -4,8 +4,8 @@ import processing.core.*;
 
 public class Bounds extends GsynlibBase {
 	
-	float minA = -100000;
-	float maxA = 100000;
+	float minA = -Float.MAX_VALUE;
+	float maxA = Float.MAX_VALUE;
 	
 	public PVector position = new PVector();
 	public PVector size = new PVector();
