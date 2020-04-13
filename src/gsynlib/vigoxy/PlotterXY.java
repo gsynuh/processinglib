@@ -71,7 +71,6 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		PApplet a = app();
 
 		serialPort = new Serial(a, _serialPortName, 115200);
-		bufferUntilByte = (byte) lf;
 		serialPort.bufferUntil(lf);
 
 		try {
@@ -181,11 +180,6 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	}
 
 // ------------------------------------- SERIAL EVENT ----------------------------------
-	byte[] buffer = new byte[32768];
-	int inBuffer = 0;
-	int readOffset = 0;
-	int bufferUntilSize = 0;
-	byte bufferUntilByte = 0;
 
 	@Override
 	public void serialEvent(SerialPortEvent event) {
