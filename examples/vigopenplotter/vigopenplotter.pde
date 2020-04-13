@@ -1,3 +1,11 @@
+/*
+*
+*  Wait for the red rectangle to be green (received OK from plotter)
+*  And use the arrow keys to move relatively (using gcode's G0)
+*  numpad's 8 and 2 keys should change the pen's state.
+*
+*/
+
 import gsynlib.geom.*;
 import gsynlib.utils.*;
 import gsynlib.scheduling.*;
@@ -23,6 +31,7 @@ void setup() {
 
 void draw() {
   background(255);
+  
    if (!plotter.initialized || plotter.getCommandCount() >0)
   {
     fill(255, 0, 0);
