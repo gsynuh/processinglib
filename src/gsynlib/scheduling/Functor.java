@@ -2,7 +2,9 @@ package gsynlib.scheduling;
 
 import static processing.core.PApplet.*;
 
-public class Functor {
+import gsynlib.base.GsynlibBase;
+
+public class Functor extends GsynlibBase {
 	public long startTime = 0;
 	public float currentTime = 0;
 	public float currentRunTime = 0;
