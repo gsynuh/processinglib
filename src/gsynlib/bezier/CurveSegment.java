@@ -62,11 +62,11 @@ public class CurveSegment extends GsynlibBase {
 		t = PApplet.constrain(t, 0, 1);
 
 		if (reverse) {
-			x = g().bezierPoint(p4.x, p3.x, p2.x, p1.x, t);
-			y = g().bezierPoint(p4.y, p3.y, p2.y, p1.y, t);
+			x = app().bezierPoint(p4.x, p3.x, p2.x, p1.x, t);
+			y = app().bezierPoint(p4.y, p3.y, p2.y, p1.y, t);
 		} else {
-			x = g().bezierPoint(p1.x, p2.x, p3.x, p4.x, t);
-			y = g().bezierPoint(p1.y, p2.y, p3.y, p4.y, t);
+			x = app().bezierPoint(p1.x, p2.x, p3.x, p4.x, t);
+			y = app().bezierPoint(p1.y, p2.y, p3.y, p4.y, t);
 		}
 
 		return new PVector(x, y);
@@ -83,43 +83,43 @@ public class CurveSegment extends GsynlibBase {
 	}
 
 	public void render() {
-		g().pushStyle();
-		g().strokeWeight(1);
+		app().pushStyle();
+		app().strokeWeight(1);
 
-		g().noFill();
-		g().strokeWeight(2);
-		g().stroke(64);
+		app().noFill();
+		app().strokeWeight(2);
+		app().stroke(64);
 
-		g().bezier(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y);
+		app().bezier(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y);
 
-		g().popStyle();
+		app().popStyle();
 	}
 
 	void drawPoint(int i, PVector p, float size) {
-		g().pushMatrix();
-		g().noStroke();
-		g().fill(0);
-		g().translate(p.x, p.y);
-		g().ellipse(0, 0, size, size);
-		g().text("c" + this.id + "p" + i, 5, 2 + this.id * 10);
-		g().popMatrix();
+		app().pushMatrix();
+		app().noStroke();
+		app().fill(0);
+		app().translate(p.x, p.y);
+		app().ellipse(0, 0, size, size);
+		app().text("c" + this.id + "p" + i, 5, 2 + this.id * 10);
+		app().popMatrix();
 	}
 
 	void renderDebug() {
-		g().pushStyle();
-		g().strokeWeight(1);
+		app().pushStyle();
+		app().strokeWeight(1);
 
-		g().pushMatrix();
-		g().stroke(0, 120, 255);
-		g().translate(p1.x, p1.y);
-		g().line(0, 0, t1.x, t1.y);
-		g().popMatrix();
+		app().pushMatrix();
+		app().stroke(0, 120, 255);
+		app().translate(p1.x, p1.y);
+		app().line(0, 0, t1.x, t1.y);
+		app().popMatrix();
 
-		g().pushMatrix();
-		g().stroke(255, 120, 80);
-		g().translate(p4.x, p4.y);
-		g().line(0, 0, t2.x, t2.y);
-		g().popMatrix();
+		app().pushMatrix();
+		app().stroke(255, 120, 80);
+		app().translate(p4.x, p4.y);
+		app().line(0, 0, t2.x, t2.y);
+		app().popMatrix();
 
 		float r1 = 5;
 		float r2 = 1;
@@ -129,7 +129,7 @@ public class CurveSegment extends GsynlibBase {
 		drawPoint(3, p3, r2);
 		drawPoint(4, p4, r1);
 
-		g().popStyle();
+		app().popStyle();
 	}
 
 	public void translateCurve(PVector translation) {

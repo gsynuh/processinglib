@@ -39,8 +39,8 @@ public class Bounds extends GsynlibBase {
 	
 	public PVector getRandom() {
 		return new PVector(
-				position.x + g().random(0,size.x),
-				position.y + g().random(0,size.y)
+				position.x + app().random(0,size.x),
+				position.y + app().random(0,size.y)
 				);
 	}
 

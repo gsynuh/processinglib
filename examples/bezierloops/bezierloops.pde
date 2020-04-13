@@ -12,7 +12,7 @@ int seed = 0;
 void setup() {
   size(600,600);
   
-  GApp.setApp(this);
+  GApp.set(this);
   
   loop = new BezierLoop();
   init();

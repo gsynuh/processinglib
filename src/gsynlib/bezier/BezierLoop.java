@@ -43,7 +43,7 @@ public class BezierLoop extends GsynlibBase {
 		PVector tangentTarget = poisson.getPointNeighboor(p1, maxTangentDistance);
 
 		float tanAngle = tangentTarget.sub(p1).heading() - PApplet.PI;
-		float tanRadius = g().random(minTangentDistance, maxTangentDistance * 2);
+		float tanRadius = app().random(minTangentDistance, maxTangentDistance * 2);
 
 		for (int i = 0; i < numCurves; i++) {
 
@@ -57,7 +57,7 @@ public class BezierLoop extends GsynlibBase {
 			float a = tangentTarget.sub(p4).heading() - PApplet.PI;
 
 			cs.setTrangent(0, tanAngle, tanRadius); // ALIGN WITH PREVIOUS
-			cs.setTrangent(1, a, g().random(minTangentDistance, maxTangentDistance * 2));
+			cs.setTrangent(1, a, app().random(minTangentDistance, maxTangentDistance * 2));
 
 			p1 = cs.p4;
 			tanAngle = cs.t2.heading() - PApplet.PI;
@@ -117,38 +117,38 @@ public class BezierLoop extends GsynlibBase {
 	}
 
 	public void render() {
-		g().pushMatrix();
+		app().pushMatrix();
 		for (int i = 0; i < curves.size(); i++) {
 			CurveSegment cs = curves.get(i);
 			cs.render();
 		}
-		g().popMatrix();
+		app().popMatrix();
 	}
 
 	public void renderBake() {
-		g().pushMatrix();
-		g().noFill();
-		g().stroke(0);
-		g().strokeWeight(1);
-		g().beginShape();
+		app().pushMatrix();
+		app().noFill();
+		app().stroke(0);
+		app().strokeWeight(1);
+		app().beginShape();
 		for (int i = 0; i < points.size(); i++) {
 			PVector p = points.get(i);
-			g().vertex(p.x, p.y);
+			app().vertex(p.x, p.y);
 		}
 
-		g().endShape(PApplet.OPEN);
-		g().popMatrix();
+		app().endShape(PApplet.OPEN);
+		app().popMatrix();
 	}
 
 	public void renderDebug() {
-		g().pushMatrix();
+		app().pushMatrix();
 		poisson.renderDebug();
 
 		for (int i = 0; i < curves.size(); i++) {
 			CurveSegment cs = curves.get(i);
 			cs.renderDebug();
 		}
-		g().popMatrix();
+		app().popMatrix();
 	}
 
 	void moveAndScaleCurve() {

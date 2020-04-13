@@ -64,8 +64,8 @@ public class PoissonSampler extends GsynlibBase {
 				pos.x += minRadius / 2;
 				pos.y += minRadius / 2;
 
-				pos.x += g().random(-minRadius / 8, minRadius / 8);
-				pos.y += g().random(-minRadius / 8, minRadius / 8);
+				pos.x += app().random(-minRadius / 8, minRadius / 8);
+				pos.y += app().random(-minRadius / 8, minRadius / 8);
 
 				points.add(pos);
 				pointsTaken.add(false);
@@ -114,12 +114,12 @@ public class PoissonSampler extends GsynlibBase {
 		}
 
 		if (searchBuffer.size() == 0) {
-			foundPoint = points.get((int) PApplet.floor(g().random(0, points.size())));
+			foundPoint = points.get((int) PApplet.floor(app().random(0, points.size())));
 			return foundPoint;
 		}
 
 		do {
-			int index = PApplet.floor(g().random(0, searchBuffer.size()));
+			int index = PApplet.floor(app().random(0, searchBuffer.size()));
 			PVector p = searchBuffer.get(index);
 			foundPoint = p;
 		} while (foundPoint == null);
@@ -135,10 +135,10 @@ public class PoissonSampler extends GsynlibBase {
 		do {
 
 			if (AllPointsTaken()) {
-				foundPoint = points.get(PApplet.floor(g().random(points.size())));
+				foundPoint = points.get(PApplet.floor(app().random(points.size())));
 			} else {
 
-				int index = PApplet.floor(g().random(0, points.size()));
+				int index = PApplet.floor(app().random(0, points.size()));
 
 				if (!IsPointIndexTaken(index)) {
 					PVector p = points.get(index);
@@ -153,13 +153,13 @@ public class PoissonSampler extends GsynlibBase {
 	}
 
 	public void renderDebug() {
-		g().noStroke();
+		app().noStroke();
 		for (int i = 0; i < points.size(); i++) {
 			PVector p = points.get(i);
 			Boolean taken = pointsTaken.get(i);
-			g().fill(taken ? 220 : 130);
+			app().fill(taken ? 220 : 130);
 			float r = taken ? 10 : 4;
-			g().ellipse(p.x, p.y, r, r);
+			app().ellipse(p.x, p.y, r, r);
 		}
 	}
 }
