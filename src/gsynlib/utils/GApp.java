@@ -15,6 +15,22 @@ public class GApp {
 
 		GsynlibBase._app = _app;
 	}
+	
+	public static int color(int r, int g, int b, int a) {
+		r = r & 0xFF;
+		g = g & 0xFF;
+		b = b & 0xFF;
+		a = a & 0xFF;
+		return (r << 24) + (g << 16) + (b << 8) + (a);
+	}
+	
+	public static int color(int r, int g, int b) {
+		return color(r,g,b,0xFF);
+	}
+	
+	public static int color(int g, int a) {
+		return color(g,g,g,a);
+	}
 
 	public static String asciiToHex(String asciiStr) {
 		char[] chars = asciiStr.toCharArray();

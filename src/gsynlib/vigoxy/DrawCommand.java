@@ -26,20 +26,20 @@ public class DrawCommand extends GsynlibBase {
 
 	protected PlotterCanvas canvas;
 
-	public DrawCommand(PlotterCanvas _canvas, PVector ...values) {
+	public DrawCommand(PlotterCanvas _canvas, PVector... values) {
 		this.canvas = _canvas;
 
 		originalPoints = new ArrayList<PVector>();
-		
-		for(int i = 0; i < values.length; i++) {
+
+		for (int i = 0; i < values.length; i++) {
 			originalPoints.add(values[i].copy());
 		}
-		
+
 		bakedPoints = new ArrayList<PVector>();
 	}
 
 	public void prepare() {
-		
+
 	}
 
 	public void bake() {
@@ -48,18 +48,18 @@ public class DrawCommand extends GsynlibBase {
 		drawCount = 0;
 		dirty = false;
 	}
-	
+
 	public void bakePoints() {
-		
+
 		PVector p1 = originalPoints.get(0);
 		bakedPoints.add(p1);
-		
-		for(int i = 1; i < originalPoints.size(); i++) {
+
+		for (int i = 1; i < originalPoints.size(); i++) {
 			PVector p = originalPoints.get(i);
 			bakeFill(p);
 			bakedPoints.add(p);
 		}
-		
+
 		bakeFill(p1);
 		bakedPoints.add(p1);
 	}
@@ -67,38 +67,49 @@ public class DrawCommand extends GsynlibBase {
 	public void draw(int type) {
 		app().pushMatrix();
 		app().pushStyle();
-		
+
 		app().noFill();
 		app().stroke(0);
-		app().strokeWeight(canvas.displayScale * 0.02f);
 		
-		switch (type) {
-		default:
-			drawBake();
-			break;
-		case 0:
-			drawOriginal();
-			break;
+		if (type == 0) {
+			app().strokeWeight(canvas.displayScale * 0.03f);
+		}else {
+			app().strokeWeight(canvas.displayScale * 0.09f);
 		}
-		
+
+		drawBake(type);
+
 		app().popMatrix();
 		app().popStyle();
 	}
 
-	public void drawOriginal() {
-	}
+	public void drawBake(int type) {
 
-	public void drawBake() {
-		
-		if(this.bakedPoints.size() == 1) {
+		if (this.bakedPoints.size() == 1) {
 			PVector p = this.bakedPoints.get(0);
-			app().point(p.x,p.y);
-		}else {
-		app().beginShape();
-		for(PVector bp : this.bakedPoints) {
-			app().vertex(bp.x,bp.y);
-		}
-			app().endShape(OPEN);
+			app().point(p.x, p.y);
+		} else {
+
+			if (type == 0) {
+				app().beginShape();
+				for (PVector bp : this.bakedPoints) {
+					app().vertex(bp.x, bp.y);
+				}
+				app().endShape(OPEN);
+			} else {
+				PVector initp = this.bakedPoints.get(0);
+				for(int i = 1; i < this.bakedPoints.size(); i++) {
+					PVector p = this.bakedPoints.get(i);
+					
+					int r = (int) ((p.x * 2348f) % 255f);
+					int g = (int) ((p.y *10092f) % 255f);
+					int b = (int) ((p.x * p.y * 12333f) % 255f);
+					
+					app().stroke(app().color(r,g,b));
+					app().line(initp.x,initp.y,p.x,p.y);
+					initp = p;
+				}
+			}
 		}
 	}
 
@@ -116,8 +127,8 @@ public class DrawCommand extends GsynlibBase {
 
 		float mag = helperPoint.mag();
 		float a = helperPoint.heading();
-		
-		float fillDiv =  this.canvas.maxLengthToDraw / 5.0f;
+
+		float fillDiv = this.canvas.maxLengthToDraw / 4.0f;
 
 		if (mag >= this.canvas.maxLengthToDraw) {
 

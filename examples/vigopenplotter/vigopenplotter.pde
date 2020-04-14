@@ -13,9 +13,14 @@ import gsynlib.vigoxy.*;
 
 import processing.serial.*;
 
+import controlP5.*;
+
 float debugMoveSpeed = 10;
+float maxLengthToDraw = 15;
 PlotterXY plotter;
 PlotterCanvas canvas;
+
+ControlP5 cp5;
 
 void setup() {
   size(800, 800);
@@ -29,15 +34,22 @@ void setup() {
   plotter.open();
   
   canvas = new PlotterCanvas(plotter);
+  
+  cp5 = new ControlP5(this);
+  cp5setup(cp5);
 }
 
+
+//prepareXY is a function automatically called by PlotterCanvas
 void prepareXY(PlotterCanvas c) {
-  println("Prepare function for canvas");
   
   Bounds canvasArea;
   
+  c.backgroundColor = color(255,255,255,0);
+  c.canvasColor = color(255);
+  
   c.setCanvasBounds(canvasArea = new Bounds(0,0,400,400));
-  c.setDrawBounds(new Bounds(0,100,width,height-100));
+  c.setDrawBounds(new Bounds(0,150,width,height-250));
   
   for(int i = 0; i < 20; i++) {
     PVector p1 = c.getRandomPointOnCanvas();
@@ -67,18 +79,14 @@ void prepareXY(PlotterCanvas c) {
   }
   c.endShape(true);
   
-  c.bezierLoop((int)random(2,12),10,10,canvasArea.size.x - 20,canvasArea.size.y - 20);
-}
-
-void mousePressed() {
-  canvas.prepare();
-  canvas.bake();
+  c.bezierLoop((int)random(4,15),10,10,canvasArea.size.x - 20,canvasArea.size.y - 20);
 }
 
 void draw() {
-  background(255);
+  background(220);
   noStroke();
   
+  canvas.maxLengthToDraw = maxLengthToDraw;
   
   if (!plotter.initialized || plotter.getCommandCount() >0) //these are the initialization and "busy" combined conditions.
   {
@@ -86,7 +94,9 @@ void draw() {
   } else {
     fill(0, 255, 0);
   }
-  rect(0,0,width/2,height/2);
+  
+  float signalSize = 100;
+  rect(width - signalSize,0,signalSize,signalSize);
   
   PVector cursor = plotter.getCursor();
   PVector mot = plotter.getMotorPos();

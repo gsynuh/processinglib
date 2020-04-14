@@ -1,5 +1,6 @@
 package gsynlib.vigoxy;
 
+import java.awt.Color;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -108,9 +109,7 @@ public class PlotterCanvas extends GsynlibBase {
 			println("A shape has begun and not ended");
 		}
 
-		for (DrawCommand c : commands) {
-			c.bake();
-		}
+		reset();
 	}
 
 //------------------- DRAW COMMANDS --------------------
@@ -305,7 +304,10 @@ public class PlotterCanvas extends GsynlibBase {
 	void endDrawCommand() {
 
 	}
-
+	
+	public int backgroundColor = 0x00FFFFFF;
+	public int canvasColor = Color.white.getRGB();
+	
 	public void draw() {
 
 		float rx = drawBounds.size.x / bounds.size.x;
@@ -314,7 +316,7 @@ public class PlotterCanvas extends GsynlibBase {
 
 		PVector drawBoundsC = drawBounds.getCenter();
 
-		app().fill(0);
+		app().fill(backgroundColor);
 		app().rect(drawBounds.position.x, drawBounds.position.y, drawBounds.size.x, drawBounds.size.y);
 
 		app().pushStyle();
@@ -336,7 +338,7 @@ public class PlotterCanvas extends GsynlibBase {
 		app().pushStyle();
 		app().pushMatrix();
 		for (DrawCommand dc : commands) {
-			dc.draw(1);
+			dc.draw(this.debugLinesDI ? 1 : 0);
 		}
 		app().popMatrix();
 		app().popStyle();
@@ -345,7 +347,7 @@ public class PlotterCanvas extends GsynlibBase {
 	void drawBounds() {
 		app().pushStyle();
 		app().pushMatrix();
-		app().fill(220);
+		app().fill(canvasColor);
 		app().rect(bounds.position.x, bounds.position.y, bounds.size.x, bounds.size.y);
 		app().popMatrix();
 		app().popStyle();
