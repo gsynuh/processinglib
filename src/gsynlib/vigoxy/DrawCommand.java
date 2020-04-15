@@ -2,13 +2,13 @@ package gsynlib.vigoxy;
 
 import java.util.*;
 
+import gsynlib.utils.*;
 import gsynlib.base.GsynlibBase;
+
 import processing.core.*;
 import static processing.core.PApplet.*;
 
 public class DrawCommand extends GsynlibBase {
-
-	static final PVector helperPoint = new PVector();
 
 	public static final int UNKNOWN = 0;
 	public static final int POINT = 1;
@@ -72,9 +72,9 @@ public class DrawCommand extends GsynlibBase {
 		app().stroke(0);
 		
 		if (type == 0) {
-			app().strokeWeight(canvas.displayScale * 0.03f);
+			app().strokeWeight(this.canvas.screenScale * (1f + (this.drawCount>0 ? 2 : 0)));
 		}else {
-			app().strokeWeight(canvas.displayScale * 0.09f);
+			app().strokeWeight(this.canvas.screenScale * 3f);
 		}
 
 		drawBake(type);
@@ -122,11 +122,11 @@ public class DrawCommand extends GsynlibBase {
 			return;
 
 		PVector start = bakedPoints.get(bakedPoints.size() - 1);
-		helperPoint.set(end);
-		helperPoint.sub(start);
+		GApp.helperPoint.set(end);
+		GApp.helperPoint.sub(start);
 
-		float mag = helperPoint.mag();
-		float a = helperPoint.heading();
+		float mag = GApp.helperPoint.mag();
+		float a = GApp.helperPoint.heading();
 
 		float fillDiv = this.canvas.maxLengthToDraw / 4.0f;
 

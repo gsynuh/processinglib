@@ -34,13 +34,12 @@ public class CursorValueChange extends Functor {
 
 	public void execute() {
 		super.execute();
-		this.ref.x = lerp(this.from.x, this.to.x, this.currentRunTime);
-		this.ref.y = lerp(this.from.y, this.to.y, this.currentRunTime);
+		this.ref.x = lerp(this.from.x, this.to.x, this.normalizedTime);
+		this.ref.y = lerp(this.from.y, this.to.y, this.normalizedTime);
 
-		if (this.currentRunTime >= this.runTime - 0.001) {
+		if (this.normalizedTime >= 1f) {
 			this.ref.x = this.to.x;
 			this.ref.y = this.to.y;
 		}
-
 	}
 }

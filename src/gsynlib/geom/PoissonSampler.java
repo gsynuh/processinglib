@@ -117,7 +117,7 @@ public class PoissonSampler extends GsynlibBase {
 		}
 
 		if (searchBuffer.size() == 0) {
-			foundPoint = points.get((int) floor(app().random(0, points.size())));
+			foundPoint = points.get(floor(app().random(0, points.size())));
 			return foundPoint;
 		}
 

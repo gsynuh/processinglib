@@ -2,6 +2,8 @@ package gsynlib.utils;
 
 import gsynlib.base.GsynlibBase;
 import processing.core.PApplet;
+import processing.core.PVector;
+
 import static processing.core.PApplet.*;
 
 public class GApp {
@@ -15,6 +17,8 @@ public class GApp {
 
 		GsynlibBase._app = _app;
 	}
+	
+	public static final PVector helperPoint = new PVector();
 	
 	public static int color(int r, int g, int b, int a) {
 		r = r & 0xFF;

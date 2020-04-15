@@ -2,13 +2,11 @@ package gsynlib.bezier;
 
 import gsynlib.base.*;
 import gsynlib.geom.*;
-
+import gsynlib.utils.*;
 import processing.core.*;
 import static processing.core.PApplet.*;
 
 public class CurveSegment extends GsynlibBase {
-
-	protected PVector helper = new PVector();
 
 	public PVector p1 = new PVector();
 	public PVector p2 = new PVector();
@@ -38,22 +36,22 @@ public class CurveSegment extends GsynlibBase {
 		PVector tp = i == 0 ? this.p2 : this.p3;
 		PVector p = i == 0 ? this.p1 : this.p4;
 
-		helper.x = cos(angle) * dist;
-		helper.y = sin(angle) * dist;
-		helper.add(p);
+		GApp.helperPoint.x = cos(angle) * dist;
+		GApp.helperPoint.y = sin(angle) * dist;
+		GApp.helperPoint.add(p);
 
-		tp.set(helper);
+		tp.set(GApp.helperPoint);
 
 		createTangents();
 	}
 
 	void createTangents() {
-		helper.set(p2);
-		helper.sub(p1);
-		t1.set(helper);
-		helper.set(p3);
-		helper.sub(p4);
-		t2.set(helper);
+		GApp.helperPoint.set(p2);
+		GApp.helperPoint.sub(p1);
+		t1.set(GApp.helperPoint);
+		GApp.helperPoint.set(p3);
+		GApp.helperPoint.sub(p4);
+		t2.set(GApp.helperPoint);
 	}
 
 	public PVector sampleCurve(float t, Boolean reverse) {

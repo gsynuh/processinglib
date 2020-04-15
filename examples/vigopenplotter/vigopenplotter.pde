@@ -34,6 +34,7 @@ void setup() {
   plotter.open();
   
   canvas = new PlotterCanvas(plotter);
+  maxLengthToDraw = canvas.maxLengthToDraw;
   
   cp5 = new ControlP5(this);
   cp5setup(cp5);
@@ -48,13 +49,8 @@ void prepareXY(PlotterCanvas c) {
   c.backgroundColor = color(255,255,255,0);
   c.canvasColor = color(255);
   
-  c.setCanvasBounds(canvasArea = new Bounds(0,0,400,400));
-  c.setDrawBounds(new Bounds(0,150,width,height-250));
-  
-  for(int i = 0; i < 20; i++) {
-    PVector p1 = c.getRandomPointOnCanvas();
-    c.point(p1.x,p1.y);
-  }
+  c.setCanvasBounds(canvasArea = new Bounds(0,0,100,100));
+  c.setDrawBounds(new Bounds(0,150,width,height-255));
   
   for(int i = 0; i < 2; i++) {
     PVector p1 = c.getRandomPointOnCanvas();
@@ -62,18 +58,23 @@ void prepareXY(PlotterCanvas c) {
     c.line(p1.x,p1.y,p2.x,p2.y);
   }
   
-  for(int i = 0; i < 2; i++) {
-    PVector p1 = c.getRandomPointOnCanvas();
-    c.rect(p1.x,p1.y,random(5,40),random(5,40));
-  }
+  PVector cbr = canvasArea.getBottomRight();
+  c.rect(0,0,10,10);
+  c.rect(cbr.x - 10,cbr.y - 10,10,10);
   
-  for(int i = 0; i < 2; i++) {
+  c.point(5,5);
+  c.point(cbr.x - 5,cbr.y - 5);
+  
+  for(int i = 0; i < 4; i++) {
     PVector p1 = c.getRandomPointOnCanvas();
-    c.circle(p1.x,p1.y,random(5,40));
+    float rad = random(5,20);
+    p1.x = constrain(p1.x,canvasArea.position.x + rad,canvasArea.position.x + canvasArea.size.x - rad);
+    p1.y = constrain(p1.y,canvasArea.position.y + rad,canvasArea.position.y + canvasArea.size.y - rad);
+    c.circle(p1.x,p1.y,rad);
   }
   
   c.beginShape();
-  for(int i = 0; i < 10; i++) {
+  for(int i = 0; i < 4; i++) {
     PVector p1 = c.getRandomPointOnCanvas();
     c.vertex(p1.x,p1.y);
   }

@@ -12,10 +12,10 @@ void cp5setup(ControlP5 c) {
            cp5.addSlider("maxLengthToDraw")
        .setPosition(10, height - 70)
        .setSize(210, 20)
-       .setRange(5, 40)
+       .setRange(10, 200)
        .setValue(maxLengthToDraw)
        .setColorCaptionLabel(canvasColor1)
-       .setLabel("max mine distance");
+       .setLabel("max line distance");
        
        cp5.addButton("penUp")
      .setPosition(250,10)
@@ -73,6 +73,12 @@ void cp5setup(ControlP5 c) {
      .setLabel("TOGGLE DLINES")
      ;
      
+     cp5.addButton("FakeDrawBounds")
+     .setPosition(670,height - 40)
+     .setSize(100,30)
+     .setLabel("SHOW BOUNDS")
+     ;
+     
      cp5.addButton("ClearXYCommands")
      .setPosition(width - 110,60)
      .setSize(100,30)
@@ -95,6 +101,10 @@ void SetOrigin() {
   plotter.setCurrentAsOrigin();
 }
 
+void FakeDrawBounds() {
+  canvas.showBounds();
+}
+
 void penUp() {
  plotter.penUp();
 }
@@ -113,19 +123,11 @@ void ChangeDebugLine() {
 }
 
 void DoDrawingFake() {
-  plotter.backToOrigin();
-  plotter.penUp();
-  println("FAKE DRAWING NOT IMPLEMENTED");
-  plotter.penUp();
-  plotter.backToOrigin();
+  canvas.testPrint();
 }
 
 void DoDrawing(){
-  plotter.backToOrigin();
-  plotter.penUp();
-  println("DRAWING NOT IMPLEMENTED");
-  plotter.penUp();
-  plotter.backToOrigin();
+  canvas.print();
 }
 
 void SetDrawingBottomRight() {

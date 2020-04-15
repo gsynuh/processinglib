@@ -52,8 +52,8 @@ public class Bounds extends GsynlibBase {
 
 	public PVector getCenter() {
 		PVector p = new PVector();
-		p.x = (float) (position.x + size.x * 0.5);
-		p.y = (float) (position.y + size.y * 0.5);
+		p.x = position.x + size.x * 0.5f;
+		p.y = position.y + size.y * 0.5f;
 		return p;
 	}
 
@@ -63,6 +63,17 @@ public class Bounds extends GsynlibBase {
 
 	public void Encapsulate(PVector p) {
 		this.Encapsulate(new Bounds(p));
+	}
+	
+	public void Inflate(float _size) {
+		
+		this.position.x += _size;
+		this.position.y += _size;
+		this.size.x += _size * 2f;
+		this.size.y += _size * 2f;
+		
+		this.size.x = this.size.x < 0 ? 0 : this.size.x;
+		this.size.y = this.size.y < 0 ? 0 : this.size.y;
 	}
 
 	static PVector horizontal = new PVector();

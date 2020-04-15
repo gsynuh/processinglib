@@ -12,7 +12,6 @@ import processing.core.*;
 import processing.serial.*;
 import static processing.core.PApplet.*;
 
-
 //PlotterXY sends GCODE command to serial
 //Made with the commands of Vigo Tec's writer/engraver in mind
 //https://www.extremeelectronics.co.uk/vigo-tec-vg-a4-writer-engraver/
@@ -59,11 +58,14 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	public PVector getMotorPos() {
 		return motorPosition;
 	}
-	
+
 	public int getCommandCount() {
 		return commands.size();
 	}
-
+	
+	public void addCommand(Functor f) {
+		this.commands.add(f);
+	}
 
 	public PlotterXY(String _serialPortName) {
 		lfstr = GApp.hexToAscii("" + lf);
@@ -74,9 +76,9 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		serialPort.bufferUntil(lf);
 
 		try {
-			if(serialPort.port.removeEventListener()) {
+			if (serialPort.port.removeEventListener()) {
 				serialPort.port.addEventListener(this);
-			}else {
+			} else {
 				println("Couldn't remove port listener");
 			}
 		} catch (SerialPortException e) {
@@ -90,21 +92,22 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	}
 
 	public void open() {
-		
-		//set scheduler to run this' schedulExecute function. commands will be processed there independantly from the app's frame rate.
+
+		// set scheduler to run this' schedulExecute function. commands will be
+		// processed there independantly from the app's frame rate.
 		scheduler.setTask(this, "scheduleExecute");
 
-		//Init command for the plotter
+		// Init command for the plotter
 		send("V4&^CMP*GWFIK5SHA$CPE");
 
-		//start scheduler, asking for 15ms period
+		// start scheduler, asking for 15ms period
 		scheduler.start(15);
-		
-		//Try to read the serial port just in case
+
+		// Try to read the serial port just in case
 		String firstRead = serialPort.readString();
 		processReadString(firstRead);
 	}
-	
+
 	protected void scheduleExecute() {
 		processMessages();
 	}
@@ -117,14 +120,13 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 
 			if (!func.initialized) {
 				func.init();
-			}
 
-			if (func.canExecute()) {
-				func.execute();
-				func.executeCallCount++;
 			}
-
+			
 			func.updateTime();
+			
+			func.execute();
+			func.executeCallCount++;
 
 			if (func.done)
 				commands.remove(0);
@@ -141,7 +143,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	public void QueueCommand(Functor f, int waitMS) {
 
 		if (waitMS > 0)
-			f.waitTime = waitMS / 1000.0f;
+			f.runTime = waitMS / 1000.0f;
 
 		commands.add(f);
 	}
@@ -149,7 +151,6 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	public void QueueCommand(Functor f) {
 		QueueCommand(f, 0);
 	}
-	
 
 	void processReadString(String str) {
 
@@ -184,14 +185,14 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	@Override
 	public void serialEvent(SerialPortEvent event) {
 
-		//PlotterXY removed the event listener to "catch" the event, so call the listener explicitly first.
+		// PlotterXY removed the event listener to "catch" the event, so call the
+		// listener explicitly first.
 		this.serialPort.serialEvent(event);
 
-		
 		if (event.getEventType() == SerialPortEvent.RXCHAR) {
 			String str = this.serialPort.readString();
-			
-			if(str != null)
+
+			if (str != null)
 				this.onStringReceivedFromSerial(str);
 		}
 	}
@@ -199,7 +200,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	void onStringReceivedFromSerial(String receivedString) {
 
 		if (receivedString.contains("|")) {
-			
+
 			String[] infos = receivedString.split("\\|", 4);
 			for (String info : infos) {
 				if (info.contains("Pos:")) {
@@ -229,15 +230,17 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 			SetMoveState(MOVE_STATE.FAST);
 	}
 
-	
-	//clear queued commands and back to origin
+	// clear queued commands and back to origin
 	public void clearXYCommands() {
-
 		commands.clear();
 		backToOrigin();
 		penUp();
 	}
 	
+	public void unsafeClear() {
+		commands.clear();
+	}
+
 	public void penUp() {
 		println("PEN UP");
 		send("M5");
@@ -273,6 +276,10 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 			}
 		}, 500);
 	}
+	
+	public void setOrigin(PVector point) {
+		setOrigin(point.x,point.y);
+	}
 
 	public void setOrigin(float x, float y) {
 		send("G92", x, y);
@@ -290,6 +297,10 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		InterpolateDisplayCursor(0, 0);
 		cursorA.set(0, 0);
 	}
+	
+	public void moveTo(PVector point) {
+		moveTo(point.x,point.y);
+	}
 
 	public void moveTo(float x, float y) {
 
@@ -298,6 +309,10 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		send("G" + (moveState == MOVE_STATE.FAST ? "0" : "1"), to.x, to.y);
 		InterpolateDisplayCursor(to.x, to.y);
 		cursorA.set(to);
+	}
+	
+	public void moveRelative(PVector point) {
+		moveRelative(point.x,point.y);
 	}
 
 	public void moveRelative(float x, float y) {
@@ -316,15 +331,16 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	String createPositionString(float x, float y) {
 		return " X" + setFloatPrecision(x) + " Y" + setFloatPrecision(-y) + " Z0";
 	}
-	
+
 	String formatStringForMessage(double d) {
 		if (d == (long) d)
 			return String.format("%d", (long) d);
 		else
 			return String.format("%s", d);
 	}
-	
+
 	float precision = 1000;
+
 	public String setFloatPrecision(float value) {
 		float v = round(value * precision) / precision;
 		return formatStringForMessage(v);

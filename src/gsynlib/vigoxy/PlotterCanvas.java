@@ -9,17 +9,16 @@ import java.util.*;
 import gsynlib.base.GsynlibBase;
 import gsynlib.bezier.BezierLoop;
 import gsynlib.geom.*;
+import gsynlib.scheduling.*;
 import processing.core.*;
 import static processing.core.PApplet.*;
 
 public class PlotterCanvas extends GsynlibBase {
 
-	public float displayScale = 10f;
+	public float screenScale = 1f;
 
 	public float maxLengthToDraw = 15.1f;
 	public Boolean debugLinesDI = false;
-
-	PVector BR = new PVector();
 
 	protected PlotterXY plotter;
 	protected ArrayList<DrawCommand> commands;
@@ -77,7 +76,7 @@ public class PlotterCanvas extends GsynlibBase {
 	public void prepare() {
 
 		this.clear();
-		
+
 		try {
 			if (externalPrepareMethodA != null) {
 				externalPrepareMethodA.invoke(app(), this);
@@ -135,10 +134,10 @@ public class PlotterCanvas extends GsynlibBase {
 				loop.setTargetBounds(new Bounds(pts[0], pts[1]));
 				loop.init(curvesNum, 0);
 			}
-			
+
 			@Override
 			public void bakePoints() {
-				for(int i = 0; i < loop.getBakedPoints().size(); i++) {
+				for (int i = 0; i < loop.getBakedPoints().size(); i++) {
 					PVector p = loop.getBakedPoints().get(i);
 					bakeFill(p);
 					bakedPoints.add(p);
@@ -280,7 +279,7 @@ public class PlotterCanvas extends GsynlibBase {
 
 	public void vertex(float x, float y) {
 		if (pendingCommand != null) {
-			PVector p = new PVector(x,y);
+			PVector p = new PVector(x, y);
 			pendingCommand.originalPoints.add(p.copy());
 		}
 	}
@@ -298,21 +297,140 @@ public class PlotterCanvas extends GsynlibBase {
 //------------------- DRAW COMMANDS --------------------
 
 	void startDrawCommand() {
-
+		plotter.backToOrigin();
+		plotter.penUp();
 	}
 
 	void endDrawCommand() {
+		plotter.penUp();
+		plotter.backToOrigin();
+	}
 
+	public void showBounds() {
+		showBounds(0);
+	}
+
+	public void showBounds(int count) {
+
+		if (count == 0) {
+			startDrawCommand();
+			plotter.SetMoveState(PlotterXY.MOVE_STATE.FAST);
+		}
+
+		class DrawBoundsFunctor extends Functor {
+			PlotterCanvas canvas;
+			PlotterXY plotter;
+			int count;
+
+			public DrawBoundsFunctor(PlotterXY p, PlotterCanvas c, int count) {
+				this.canvas = c;
+				this.plotter = p;
+				this.count = count;
+			}
+
+			@Override
+			public void execute() {
+				canvas.showBounds(this.count);
+			}
+		}
+
+		PVector p1 = this.bounds.position.copy();
+		PVector p3 = this.bounds.getBottomRight();
+		PVector p2 = new PVector(p1.x + p3.x, p1.y);
+		PVector p4 = new PVector(p1.x, p1.y + p3.y);
+
+		//plotter.unsafeClear();
+		plotter.moveTo(p1);
+		plotter.moveTo(p2);
+		plotter.moveTo(p3);
+		plotter.moveTo(p4);
+
+		DrawBoundsFunctor f = new DrawBoundsFunctor(plotter, this, count + 1);
+		plotter.addCommand(f);
+
+		if (count == 0)
+			endDrawCommand();
+	}
+
+	void drawCommand(DrawCommand dc, Boolean penDown) {
+
+		// UP
+		plotter.penUp();
+		// MOVE TO INITIAL POINT
+		PVector p = dc.bakedPoints.get(0);
+		plotter.moveTo(p.x, p.y);
+
+		// PEN DOWN
+		if (penDown)
+			plotter.penDown();
+
+		// DRAW PATH
+		for (int i = 1; i < dc.bakedPoints.size(); i++) {
+			p = dc.bakedPoints.get(i);
+			plotter.moveTo(p.x, p.y);
+		}
+		
+		class MarkDrawCommandAsDone extends Functor {
+			DrawCommand dc = null;
+			public MarkDrawCommandAsDone(DrawCommand _dc) {
+				this.dc = _dc;
+			}
+			
+			@Override
+			public void execute() {
+				this.dc.drawCount++;
+			}
+		}
+		
+		plotter.addCommand(new MarkDrawCommandAsDone(dc));
+
+		// PEN UP
+		plotter.penUp();
 	}
 	
+	void resetDrawCounts() {
+		for (int i = 0; i < commands.size(); i++) {
+			DrawCommand dc = commands.get(i);
+			dc.drawCount = 0;
+		}
+	}
+
+	public void print() {
+		resetDrawCounts();
+		startDrawCommand();
+		println("PRINT");
+
+		for (int i = 0; i < commands.size(); i++) {
+			DrawCommand dc = commands.get(i);
+			drawCommand(dc, true);
+		}
+
+		endDrawCommand();
+	}
+
+	public void testPrint() {
+		resetDrawCounts();
+		startDrawCommand();
+		println("TEST PRINT");
+
+		for (int i = 0; i < commands.size(); i++) {
+			DrawCommand dc = commands.get(i);
+			drawCommand(dc, false);
+		}
+
+		endDrawCommand();
+	}
+
 	public int backgroundColor = 0x00FFFFFF;
 	public int canvasColor = Color.white.getRGB();
-	
+
 	public void draw() {
 
 		float rx = drawBounds.size.x / bounds.size.x;
 		float ry = drawBounds.size.y / bounds.size.y;
 		float s = rx > ry ? ry : rx;
+
+		screenScale = 1f / s;
 
 		PVector drawBoundsC = drawBounds.getCenter();
 
@@ -358,12 +476,13 @@ public class PlotterCanvas extends GsynlibBase {
 
 		PVector displayCursor = plotter.getDisplayCursor();
 
-		app().translate(displayCursor.x * displayScale, displayCursor.y * displayScale);
+		app().translate(displayCursor.x, displayCursor.y);
 		app().stroke(255, 0, 0);
-		app().strokeWeight(displayScale * 0.1f);
+		app().strokeWeight(screenScale * 2f);
 
 		app().noFill();
-		float size = 5f * displayScale;
+		float size = 60 * screenScale;
+
 		app().ellipse(0, 0, size / 2, size / 2);
 		app().line(-size / 2, 0, -size / 8, 0);
 		app().line(size / 8, 0, size / 2, 0);
@@ -372,8 +491,7 @@ public class PlotterCanvas extends GsynlibBase {
 
 		app().fill(0);
 		app().textSize(size * 0.2f);
-		app().text("C" + printVec(displayCursor), size / 2f, 5f);
-		app().text("BR" + printVec(BR), size / 2f, -5f);
+		app().text("C" + printVec(displayCursor), size / 2f, -5f);
 
 		app().popMatrix();
 	}
