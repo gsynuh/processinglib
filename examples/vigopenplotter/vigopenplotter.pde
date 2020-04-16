@@ -96,7 +96,7 @@ void draw() {
     fill(0, 255, 0);
   }
   
-  float signalSize = 100;
+  float signalSize = 50;
   rect(width - signalSize,0,signalSize,signalSize);
   
   PVector cursor = plotter.getCursor();

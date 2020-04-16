@@ -80,14 +80,34 @@ void cp5setup(ControlP5 c) {
      ;
      
      cp5.addButton("ClearXYCommands")
-     .setPosition(width - 110,60)
+     .setPosition(width - 220,60)
      .setSize(100,30)
      .setLabel("CLEAR CMDS")
+     ; 
+     
+     cp5.addButton("ExitApp")
+     .setPosition(width - 110,60)
+     .setSize(100,30)
+     .setLabel("EXIT")
      ; 
 }
 
 
 //---- FUNCTIONS
+
+void ExitApp() {
+  plotter.clearXYCommands();
+  
+  
+  class ExitAppF extends Functor {
+    @Override
+    public void execute() {
+      GApp.get().exit();  
+    }
+  }
+  
+  plotter.addCommand(new ExitAppF());
+}
 
 void ClearXYCommands() {
   plotter.clearXYCommands();

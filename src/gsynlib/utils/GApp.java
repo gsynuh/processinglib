@@ -10,12 +10,18 @@ public class GApp {
 
 	public static Boolean verbose = true;
 
+	static PApplet __app;
 	public static void set(PApplet _app) {
 
 		if (verbose)
 			println("GApp set " + _app);
-
+		
+		__app = _app;
 		GsynlibBase._app = _app;
+	}
+	
+	public static PApplet get() {
+		return __app;
 	}
 	
 	public static final PVector helperPoint = new PVector();
