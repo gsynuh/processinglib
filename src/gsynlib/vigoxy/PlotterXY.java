@@ -1,10 +1,12 @@
 package gsynlib.vigoxy;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 import gsynlib.base.GsynlibBase;
 
 import gsynlib.scheduling.*;
+import gsynlib.scheduling.StatefulCommand.RUNSTATE;
 import gsynlib.utils.GApp;
 import gsynlib.vigoxy.functors.*;
 import jssc.*;
@@ -30,6 +32,8 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	public int fastMoveSpeed = 72;
 	public int slowMoveSpeed = 1000;
 
+	public String helloString = "V4&^CMP*GWFIK5SHA$CPE";
+
 	public MOVE_STATE moveState = MOVE_STATE.UNKNOWN;
 	public PenState pen = PenState.UNKNOWN;
 	public Boolean initialized = false;
@@ -38,10 +42,14 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	int lf = 0x0D;
 	String lfstr = "";
 
+	ReentrantLock serialReadLock = new ReentrantLock();
+	String incomingSerialMessage = null;
+
 	Scheduler scheduler;
 
 	// QUEUE OF COMMANDS
-	ArrayList<Functor> commands = new ArrayList<Functor>();
+	ReentrantLock commandsLock = new ReentrantLock();
+	ArrayList<StatefulCommand> commands = new ArrayList<StatefulCommand>();
 
 	PVector cursorA = new PVector(0, 0);
 	PVector cursorD = new PVector(0, 0);
@@ -62,9 +70,9 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	public int getCommandCount() {
 		return commands.size();
 	}
-	
-	public void addCommand(Functor f) {
-		this.commands.add(f);
+
+	public void addCommand(StatefulCommand f) {
+		commands.add(f);
 	}
 
 	public PlotterXY(String _serialPortName) {
@@ -97,40 +105,67 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		// processed there independantly from the app's frame rate.
 		scheduler.setTask(this, "scheduleExecute");
 
-		// Init command for the plotter
-		send("V4&^CMP*GWFIK5SHA$CPE");
+		this.incomingSerialMessage = this.serialPort.readString();
 
 		// start scheduler, asking for 15ms period
 		scheduler.start(15);
 
-		// Try to read the serial port just in case
-		String firstRead = serialPort.readString();
-		processReadString(firstRead);
+		// Init command for the plotter
+		send(helloString, true);
 	}
 
-	protected void scheduleExecute() {
-		processMessages();
+	synchronized protected void scheduleExecute() {
+		commandsLock.lock();
+		try {
+			processCommands();
+		} finally {
+			commandsLock.unlock();
+		}
+
+		serialReadLock.lock();
+		try {
+			processSerialRead();
+		} finally {
+			serialReadLock.unlock();
+		}
 	}
 
-	void processMessages() {
+	void processSerialRead() {
+		if (this.incomingSerialMessage == null)
+			return;
+
+		String[] lns = this.incomingSerialMessage.split("\n");
+		for (int i = 0; i < lns.length; i++) {
+			String line = lns[i];
+			this.readLineFromSerialAsync(line);
+		}
+
+		this.incomingSerialMessage = null;
+	}
+
+	void processCommands() {
 
 		if (commands.size() > 0) {
 
-			Functor func = commands.get(0);
+			StatefulCommand func = commands.get(0);
 
-			if (!func.initialized) {
-				func.init();
-
+			if (func.state == StatefulCommand.RUNSTATE.CREATED) {
+				func.start();
 			}
-			
-			func.updateTime();
-			
-			func.execute();
-			func.executeCallCount++;
 
-			if (func.done)
+			if (func.state == StatefulCommand.RUNSTATE.STARTED) {
+				func.update();
+			}
+
+			if (func.state == StatefulCommand.RUNSTATE.DONE) {
+				func.stop();
+			}
+
+			if (func.state == StatefulCommand.RUNSTATE.THRASH) {
 				commands.remove(0);
+			}
 		}
+
 	}
 
 	public void close() {
@@ -139,29 +174,21 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		serialPort.stop();
 		scheduler.stop();
 	}
-	
-	public void QueueCommand(Functor f, int waitMS) {
 
-		if (waitMS > 0)
-			f.runTime = waitMS / 1000.0f;
-
-		commands.add(f);
+	public void QueueCommand(StatefulCommand f, float waitSeconds) {
+		f.totalTime = waitSeconds / 1000f;
+		QueueCommand(f);
 	}
 
-	public void QueueCommand(Functor f) {
-		QueueCommand(f, 0);
-	}
+	public void QueueCommand(StatefulCommand f) {
 
-	void processReadString(String str) {
-
-		if (str == null || str.isEmpty()) {
-			return;
+		commandsLock.lock();
+		try {
+			commands.add(f);
+		} finally {
+			commandsLock.unlock();
 		}
 
-		if (!this.initialized && (str.contains("Vigo") || str.contains("MPos"))) {
-			this.initialized = true;
-			initResponse();
-		}
 	}
 
 	void initResponse() {
@@ -190,35 +217,82 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		this.serialPort.serialEvent(event);
 
 		if (event.getEventType() == SerialPortEvent.RXCHAR) {
-			String str = this.serialPort.readString();
-
-			if (str != null)
-				this.onStringReceivedFromSerial(str);
+			serialReadLock.lock();
+			try {
+				String str = this.serialPort.readString();
+				if (str != null) {
+					incomingSerialMessage += str + "\n";
+				}
+			} finally {
+				serialReadLock.unlock();
+			}
 		}
 	}
 
-	void onStringReceivedFromSerial(String receivedString) {
+	void readLineFromSerialAsync(String receivedString) {
+
+		Boolean isInitMessage = false;
+		Boolean isPositionMessage = false;
+		Boolean isOk = receivedString.startsWith("ok");
+		Boolean isError = receivedString.startsWith("error");
+
+		if (!this.initialized && (receivedString.contains("Vigo") || receivedString.contains("MPos"))) {
+			this.initialized = true;
+			isInitMessage = true;
+			initResponse();
+		}
 
 		if (receivedString.contains("|")) {
 
 			String[] infos = receivedString.split("\\|", 4);
 			for (String info : infos) {
 				if (info.contains("Pos:")) {
+					
+					println("POS",receivedString);
 
 					String[] poss = info.split(":")[1].split(",");
-					float x = parseFloat(poss[0]);
-					float y = parseFloat(poss[1]);
-					float z = parseFloat(poss[2]);
+					
+					float x = 0;
+					float y = 0;
+					float z = 0;
+					
+					if(poss.length > 0) x = parseFloat(poss[0]);				
+					if(poss.length > 1) y = parseFloat(poss[1]);
+					if(poss.length > 2) z = parseFloat(poss[2]);
 
 					motorPosition.x = x;
 					motorPosition.y = y;
 					motorPosition.z = z;
 				}
 			}
+
+			isPositionMessage = true;
 		}
 
-		processReadString(receivedString);
+		Boolean isFeedback = isInitMessage || isPositionMessage || isOk || isError;
 
+		commandsLock.lock();
+		try {
+			if (commands.size() > 0) {
+				StatefulCommand f = commands.get(0);
+
+				if (f instanceof MessageSender) {
+					MessageSender ms = (MessageSender) f;
+					ms.received(receivedString);
+					ms.forceFinalize();
+					ms.stop();
+					commands.remove(0);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			commandsLock.unlock();
+		}
+
+		if (isError) {
+			println("error " + receivedString);
+		}
 	}
 
 	// ----------------------------------------- COMMANDS
@@ -232,55 +306,70 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 
 	// clear queued commands and back to origin
 	public void clearXYCommands() {
-		commands.clear();
+		unsafeClear();
 		backToOrigin();
 		penUp();
 	}
-	
+
 	public void unsafeClear() {
-		commands.clear();
+		commandsLock.lock();
+		try {
+			commands.clear();
+		} finally {
+			commandsLock.unlock();
+		}
+
+		serialReadLock.lock();
+		try {
+			this.incomingSerialMessage = null;
+		} finally {
+			serialReadLock.unlock();
+		}
 	}
-	
+
 	int penWaitTimeMS = 500;
 
 	public void penUp() {
-		println("PEN UP");
 		send("M5");
 		dwell(penWaitTimeMS);
-		QueueCommand(new Functor() {
+		QueueCommand(new StatefulCommand() {
 			@Override
 			public void execute() {
+				println("PEN UP");
 				pen = PenState.UP;
+				super.finishCommand();
 			}
 		}, penWaitTimeMS);
 	}
 
 	public void penReset() {
-		println("PEN RESET");
 		send("S800");
 		dwell(penWaitTimeMS);
-		QueueCommand(new Functor() {
+		QueueCommand(new StatefulCommand() {
 			@Override
 			public void execute() {
+				println("PEN RESET");
 				pen = PenState.UNKNOWN;
+				super.finishCommand();
 			}
 		}, penWaitTimeMS);
 	}
 
 	public void penDown() {
-		println("PEN DOWN");
 		send("M3 S950");
 		dwell(penWaitTimeMS);
-		QueueCommand(new Functor() {
+		QueueCommand(new StatefulCommand() {
 			@Override
 			public void execute() {
+				println("PEN DOWN");
 				pen = PenState.DOWN;
+				super.finishCommand();
 			}
-		}, penWaitTimeMS);
+		},penWaitTimeMS);
 	}
-	
+
 	public void setOrigin(PVector point) {
-		setOrigin(point.x,point.y);
+		setOrigin(point.x, point.y);
 	}
 
 	public void setOrigin(float x, float y) {
@@ -299,9 +388,9 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		InterpolateDisplayCursor(0, 0);
 		cursorA.set(0, 0);
 	}
-	
+
 	public void moveTo(PVector point) {
-		moveTo(point.x,point.y);
+		moveTo(point.x, point.y);
 	}
 
 	public void moveTo(float x, float y) {
@@ -312,9 +401,9 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		InterpolateDisplayCursor(to.x, to.y);
 		cursorA.set(to);
 	}
-	
+
 	public void moveRelative(PVector point) {
-		moveRelative(point.x,point.y);
+		moveRelative(point.x, point.y);
 	}
 
 	public void moveRelative(float x, float y) {
@@ -326,12 +415,12 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		QueueCommand(f);
 	}
 
-	public void send(String cmd, float x, float y, String endCMD) {
-		send(cmd + createPositionString(x, y) + " " + endCMD);
+	public void send(String cmd, float x, float y, String endCMD, Boolean expectAnswer) {
+		send(cmd + createPositionString(x, y) + " " + endCMD, expectAnswer);
 	}
-	
+
 	public void dwell(float timeInMs) {
-		send("G4 P" + setFloatPrecision(((float)timeInMs) /1000f));
+		send("G4 P" + setFloatPrecision(((float) timeInMs) / 1000f), false);
 	}
 
 	String createPositionString(float x, float y) {
@@ -357,11 +446,12 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	}
 
 	public void send(String str) {
-		str = str + "\r";
-		QueueCommand(new MessageSender(this.serialPort, str.getBytes()));
-		QueueCommand(new MessageSender(this.serialPort, null));
-		QueueCommand(new MessageSender(this.serialPort, "?".getBytes()));
-		QueueCommand(new MessageSender(this.serialPort, null));
+		send(str, false);
+	}
+
+	public void send(String str, Boolean expectAnswer) {
+		str = "\n" + str + "\n" + "?" + "\n" + "\r";
+		QueueCommand(new MessageSender(this.serialPort, str.getBytes(), expectAnswer));
 	}
 
 }

@@ -99,9 +99,10 @@ void ExitApp() {
   plotter.clearXYCommands();
   
   
-  class ExitAppF extends Functor {
+  class ExitAppF extends StatefulCommand {
     @Override
     public void execute() {
+      super.execute();
       GApp.get().exit();  
     }
   }

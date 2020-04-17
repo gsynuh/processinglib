@@ -1,5 +1,6 @@
 package gsynlib.scheduling;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -15,7 +16,7 @@ public class Scheduler extends GsynlibBase {
 
 	Object externalTask;
 	Method externalRunMethod;
-	
+
 	public String name;
 
 	TimerTask task;
@@ -58,8 +59,7 @@ public class Scheduler extends GsynlibBase {
 	public void start(int freq) {
 
 		if (this.externalTask == null) {
-			println(
-					"Cannot start without task. define an object and its method name to be called using setTask.");
+			println("Cannot start without task. define an object and its method name to be called using setTask.");
 			return;
 		}
 
@@ -67,8 +67,7 @@ public class Scheduler extends GsynlibBase {
 
 		if (task != null) {
 			timer.scheduleAtFixedRate(task, 0, freq);
-			println(
-					"Scheduler started " + name + " at freq " +freq);
+			println("Scheduler started " + name + " at freq " + freq);
 			running = true;
 		}
 	}
@@ -78,6 +77,7 @@ public class Scheduler extends GsynlibBase {
 	}
 
 	public void stop() {
+		println("Scheduler "+name+" stop");
 		if (running)
 			timer.cancel();
 	}
@@ -97,8 +97,15 @@ public class Scheduler extends GsynlibBase {
 
 		try {
 			this.externalRunMethod.invoke(externalTask);
-		} catch (Exception e) {
+		} catch(InvocationTargetException e) {
+			println("Scheduler execution : ",e);
+			e.getTargetException().printStackTrace();
+			stop();
+		}
+		catch (Throwable e) {
+			println("Scheduler unknown error : ",e);
 			e.printStackTrace();
+			stop();
 		}
 	}
 

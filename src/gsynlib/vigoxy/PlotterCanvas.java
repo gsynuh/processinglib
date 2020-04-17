@@ -1,6 +1,5 @@
 package gsynlib.vigoxy;
 
-import java.awt.Color;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -317,7 +316,7 @@ public class PlotterCanvas extends GsynlibBase {
 			plotter.SetMoveState(PlotterXY.MOVE_STATE.FAST);
 		}
 
-		class DrawBoundsFunctor extends Functor {
+		class DrawBoundsFunctor extends StatefulCommand {
 			PlotterCanvas canvas;
 			PlotterXY plotter;
 			int count;
@@ -330,6 +329,7 @@ public class PlotterCanvas extends GsynlibBase {
 
 			@Override
 			public void execute() {
+				super.execute();
 				canvas.showBounds(this.count);
 			}
 		}
@@ -370,7 +370,7 @@ public class PlotterCanvas extends GsynlibBase {
 			plotter.moveTo(p.x, p.y);
 		}
 		
-		class MarkDrawCommandAsDone extends Functor {
+		class MarkDrawCommandAsDone extends StatefulCommand {
 			DrawCommand dc = null;
 			public MarkDrawCommandAsDone(DrawCommand _dc) {
 				this.dc = _dc;
@@ -378,6 +378,7 @@ public class PlotterCanvas extends GsynlibBase {
 			
 			@Override
 			public void execute() {
+				super.execute();
 				this.dc.drawCount++;
 			}
 		}
@@ -422,7 +423,7 @@ public class PlotterCanvas extends GsynlibBase {
 	}
 
 	public int backgroundColor = 0x00FFFFFF;
-	public int canvasColor = Color.white.getRGB();
+	public int canvasColor = 0xFFFFFFFF;
 
 	public void draw() {
 
