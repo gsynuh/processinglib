@@ -1,8 +1,6 @@
 package gsynlib.vigoxy.commands;
 
 import gsynlib.scheduling.*;
-import gsynlib.vigoxy.*;
-import processing.core.*;
 import processing.serial.*;
 import static processing.core.PApplet.*;
 
