@@ -31,7 +31,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 
 	public int fastMoveSpeed = 72;
 	public int slowMoveSpeed = 1000;
-	
+
 	public Boolean serialVerbose = false;
 
 	public String helloString = "V4&^CMP*GWFIK5SHA$CPE";
@@ -78,6 +78,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	}
 
 	public PlotterXY(String _serialPortName) {
+
 		lfstr = GApp.hexToAscii("" + lf);
 
 		PApplet a = app();
@@ -107,7 +108,10 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		// processed there independantly from the app's frame rate.
 		scheduler.setTask(this, "scheduleExecute");
 
-		this.incomingSerialMessage = this.serialPort.readString();
+		String firstRead = this.serialPort.readString();
+
+		if (!GApp.isNullOrEmpty(firstRead))
+			this.incomingSerialMessage = firstRead;
 
 		// start scheduler, asking for 15ms period
 		scheduler.start(15);
@@ -133,7 +137,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	}
 
 	void processSerialRead() {
-		if (this.incomingSerialMessage == null)
+		if (GApp.isNullOrEmpty(this.incomingSerialMessage))
 			return;
 
 		String[] lns = this.incomingSerialMessage.split("\n");
@@ -194,11 +198,11 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	}
 
 	void initResponse() {
-		send("M3 S0");
 		penUp();
 		SetMoveState(MOVE_STATE.FAST);
-		// help
-		send("$G", true);
+		
+		//$ = help, $G list GCode commands
+		//send("$G", true);
 	}
 
 	void SetMoveState(MOVE_STATE s) {
@@ -224,8 +228,13 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 			serialReadLock.lock();
 			try {
 				String str = this.serialPort.readString();
-				if (str != null) {
-					incomingSerialMessage += str + "\n";
+
+				if (!GApp.isNullOrEmpty(str)) {
+
+					if (GApp.isNullOrEmpty(incomingSerialMessage))
+						incomingSerialMessage = str;
+					else
+						incomingSerialMessage += str + "\n";
 				}
 			} finally {
 				serialReadLock.unlock();
@@ -246,7 +255,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 			initResponse();
 		}
 
-		if(serialVerbose)
+		if (serialVerbose)
 			println("RECEIVED STRING: ", receivedString);
 
 		if (receivedString.contains("|")) {
@@ -257,7 +266,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 
 					String[] poss1 = info.split(":");
 					if (poss1.length > 1) {
-						
+
 						String[] poss = poss1[1].split(",");
 
 						float x = 0;

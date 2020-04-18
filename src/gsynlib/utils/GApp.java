@@ -24,6 +24,10 @@ public class GApp {
 		return __app;
 	}
 	
+	public static Boolean isNullOrEmpty(String str)  {
+		return str == null || (str != null && str.isEmpty());
+	}
+	
 	public static final PVector helperPoint = new PVector();
 	
 	public static int color(int r, int g, int b, int a) {
