@@ -1,13 +1,14 @@
 package gsynlib.vigoxy;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 
 import java.util.*;
 
 import gsynlib.base.GsynlibBase;
-import gsynlib.bezier.BezierLoop;
+
+import gsynlib.bezier.*;
 import gsynlib.geom.*;
+import gsynlib.image.*;
 import gsynlib.scheduling.*;
 import processing.core.*;
 import static processing.core.PApplet.*;
@@ -118,9 +119,51 @@ public class PlotterCanvas extends GsynlibBase {
 
 	public void reset() {
 		for (DrawCommand dc : commands) {
-			dc.drawCount = 0;
+			dc.reset();
 			dc.bake();
 		}
+	}
+
+	public void image(PImage im, float x, float y, float w, float h) {
+		Bounds imageArea = new Bounds(x, y, w, h);
+
+		class ImageDC extends DrawCommand {
+			PImage image;
+			Bounds bounds;
+			Dithering ditherFilter;
+
+			public ImageDC(PlotterCanvas pc, PImage im, Bounds b) {
+				super(pc);
+				this.connectPointsOnDraw = false;
+				this.bounds = b;
+
+				this.image = app().createImage(im.width, im.height, ARGB);
+				this.image.copy(im, 0, 0, im.width, im.height, 0, 0, im.width, im.height);
+
+				this.ditherFilter = new Dithering();
+				this.ditherFilter.luminance = true;
+				this.ditherFilter.quantizeFactor = 1;
+				this.ditherFilter.CreateFilter(this.image);
+			}
+
+			@Override
+			public void bakePoints() {
+				for (int x = 0; x < this.ditherFilter.width; x++) {
+					for (int y = 0; y < this.ditherFilter.height; y++) {
+						ColorFloat c = this.ditherFilter.getColor(x, y);
+						float u = (float) x / (float) this.ditherFilter.width;
+						float v = (float) y / (float) this.ditherFilter.height;
+						if (c.r <= 0.2f) {
+							PVector p = this.bounds.getPositionFromNorm(u, v);
+							bakedPoints.add(p);
+						}
+					}
+				}
+			}
+		}
+
+		ImageDC idc = new ImageDC(this, im, imageArea);
+		commands.add(idc);
 	}
 
 	public void bezierLoop(int curvesNum, float x, float y, float w, float h) {
@@ -153,6 +196,7 @@ public class PlotterCanvas extends GsynlibBase {
 		class PointDC extends DrawCommand {
 			public PointDC(PlotterCanvas pc, PVector... pts) {
 				super(pc, pts);
+				this.connectPointsOnDraw = false;
 			}
 
 			@Override
@@ -296,13 +340,23 @@ public class PlotterCanvas extends GsynlibBase {
 //------------------- DRAW COMMANDS --------------------
 
 	void startDrawCommand() {
-		plotter.backToOrigin();
+		plotter.penReset();
 		plotter.penUp();
+		plotter.backToOrigin();
 	}
 
 	void endDrawCommand() {
 		plotter.penUp();
 		plotter.backToOrigin();
+		
+		plotter.addCommand(new StatefulCommand() {
+			@Override
+			public void start() {
+				super.start();
+				resetDrawCommands();
+				finishCommand();
+			}
+		});
 	}
 
 	public void showBounds() {
@@ -352,72 +406,91 @@ public class PlotterCanvas extends GsynlibBase {
 			endDrawCommand();
 	}
 
-	void drawCommand(DrawCommand dc, Boolean penDown) {
+	void printCommand(DrawCommand dc, Boolean penDown) {
 
-		// UP
+		//DRAW PROGRESS COMMANDS
+		
+		class CommandDrawProgress extends StatefulCommand {
+			DrawCommand dc = null;
+
+			public CommandDrawProgress(DrawCommand _dc) {
+				this.dc = _dc;
+			}
+
+			@Override
+			public void start() {
+				super.start();
+				this.dc.drawnPointCount++;
+				super.finishCommand();
+			}
+		}
+		
+		//DRAW COMMAND 
+		
+		
+		// FORCE UP
 		plotter.penUp();
 		// MOVE TO INITIAL POINT
 		PVector p = dc.bakedPoints.get(0);
 		plotter.moveTo(p.x, p.y);
 
-		// PEN DOWN
-		if (penDown)
-			plotter.penDown();
+		if (dc.connectPointsOnDraw) {
 
-		// DRAW PATH
-		for (int i = 1; i < dc.bakedPoints.size(); i++) {
-			p = dc.bakedPoints.get(i);
-			plotter.moveTo(p.x, p.y);
-		}
-
-		class MarkDrawCommandAsDone extends StatefulCommand {
-			DrawCommand dc = null;
-
-			public MarkDrawCommandAsDone(DrawCommand _dc) {
-				this.dc = _dc;
+			if (penDown)
+				plotter.penDown();
+			
+			plotter.addCommand(new CommandDrawProgress(dc));
+			// DRAW PATH
+			for (int i = 1; i < dc.bakedPoints.size(); i++) {
+				p = dc.bakedPoints.get(i);
+				plotter.moveTo(p.x, p.y);
+				plotter.addCommand(new CommandDrawProgress(dc));
 			}
 
-			@Override
-			public void execute() {
-				super.execute();
-				this.dc.drawCount++;
+		} else {
+			
+			for (int i = 0; i < dc.bakedPoints.size(); i++) {
+				p = dc.bakedPoints.get(i);
+				plotter.moveTo(p.x, p.y);
+				if (penDown)
+					plotter.penDown();
+				plotter.addCommand(new CommandDrawProgress(dc));
+				plotter.penUp();
 			}
 		}
-
-		plotter.addCommand(new MarkDrawCommandAsDone(dc));
 
 		// PEN UP
 		plotter.penUp();
 	}
 
-	void resetDrawCounts() {
+	void resetDrawCommands() {
 		for (int i = 0; i < commands.size(); i++) {
 			DrawCommand dc = commands.get(i);
-			dc.drawCount = 0;
+			dc.reset();
 		}
 	}
 
 	public void print() {
-		resetDrawCounts();
+		resetDrawCommands();
 		startDrawCommand();
 		println("PRINT");
 
 		for (int i = 0; i < commands.size(); i++) {
 			DrawCommand dc = commands.get(i);
-			drawCommand(dc, true);
+			printCommand(dc, true);
 		}
 
 		endDrawCommand();
 	}
 
 	public void testPrint() {
-		resetDrawCounts();
+		resetDrawCommands();
 		startDrawCommand();
 		println("TEST PRINT");
 
 		for (int i = 0; i < commands.size(); i++) {
 			DrawCommand dc = commands.get(i);
-			drawCommand(dc, false);
+			printCommand(dc, false);
 		}
 
 		endDrawCommand();
@@ -458,7 +531,7 @@ public class PlotterCanvas extends GsynlibBase {
 		app().pushStyle();
 		app().pushMatrix();
 		for (DrawCommand dc : commands) {
-			dc.draw(this.debugLinesDI ? 1 : 0);
+			dc.draw();
 		}
 		app().popMatrix();
 		app().popStyle();
@@ -493,7 +566,7 @@ public class PlotterCanvas extends GsynlibBase {
 
 		app().fill(0);
 		app().textSize(size * 0.2f);
-		app().text("C" + printVec(displayCursor), size / 2f, -5f);
+		app().text("CD" + printVec(displayCursor), size * 0.2f, - size * 0.4f);
 
 		app().popMatrix();
 	}

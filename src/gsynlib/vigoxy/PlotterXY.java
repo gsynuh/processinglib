@@ -351,7 +351,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	int penWaitTimeMS = 500;
 
 	public void penUp() {
-		send("M5");
+		send("M5 S950");
 		dwell(penWaitTimeMS);
 		QueueCommand(new StatefulCommand() {
 			@Override
@@ -394,7 +394,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	}
 
 	public void setOrigin(float x, float y) {
-		send("G92", x, y);
+		sendCommandWithPosition("G92", x, y);
 		cursorA.set(x, y);
 		cursorD.set(x, y);
 	}
@@ -405,7 +405,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 
 	public void backToOrigin() {
 		SetMoveState(MOVE_STATE.FAST);
-		send("G0", 0, 0);
+		sendCommandWithPosition("G0", 0, 0);
 		InterpolateDisplayCursor(0, 0);
 		cursorA.set(0, 0);
 	}
@@ -418,7 +418,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 
 		PVector to = new PVector(x, y);
 
-		send("G" + (moveState == MOVE_STATE.FAST ? "0" : "1"), to.x, to.y);
+		sendCommandWithPosition("G" + (moveState == MOVE_STATE.FAST ? "0" : "1"), to.x, to.y);
 		InterpolateDisplayCursor(to.x, to.y);
 		cursorA.set(to);
 	}
@@ -441,11 +441,11 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	}
 
 	public void dwell(float timeInMs) {
-		send("G4 P" + setFloatPrecision(((float) timeInMs) / 1000f), false);
+		send("G4 P" + setFloatPrecision(((float) timeInMs) / 1000f), true);
 	}
 
 	String createPositionString(float x, float y) {
-		return " X" + setFloatPrecision(x) + " Y" + setFloatPrecision(-y) + " Z0";
+		return " X" + setFloatPrecision(x) + " Y" + setFloatPrecision(-y) + " Z0 ";
 	}
 
 	String formatStringForMessage(double d) {
@@ -461,18 +461,25 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		float v = round(value * precision) / precision;
 		return formatStringForMessage(v);
 	}
+	
+	public String processSendStringFormat(String str) {
+		if(!str.endsWith(" "))
+			str = str + " ";
+		return str;
+	}
 
-	public void send(String cmd, float x, float y) {
-		send(cmd + createPositionString(x, y));
+	public void sendCommandWithPosition(String cmd, float x, float y) {
+		send(cmd + createPositionString(x, y),true);
 	}
 
 	public void send(String str) {
+		str = processSendStringFormat(str);
 		send(str, false);
 	}
 
 	public void send(String str, Boolean expectAnswer) {
-		str = "\n" + str + "\n" + "?" + "\n" + "\r";
-		QueueCommand(new MessageSender(this.serialPort, str.getBytes(), expectAnswer));
+		str = processSendStringFormat(str);
+		QueueCommand(new MessageSender(this.serialPort,expectAnswer,true,null, str.getBytes(), null));
 	}
 
 }

@@ -49,6 +49,16 @@ public class Bounds extends GsynlibBase {
 				position.y + app().random(0,size.y)
 				);
 	}
+	
+	public PVector getPositionFromNorm(float x, float y) {
+		x = constrain(x,0f,1f);
+		y = constrain(y,0f,1f);
+		
+		return new PVector(
+				this.position.x + x*this.size.x,
+				this.position.y + y*this.size.y
+				);
+	}
 
 	public PVector getCenter() {
 		PVector p = new PVector();

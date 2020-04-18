@@ -10,19 +10,13 @@ import static processing.core.PApplet.*;
 
 public class DrawCommand extends GsynlibBase {
 
-	public static final int UNKNOWN = 0;
-	public static final int POINT = 1;
-	public static final int LINE = 2;
-	public static final int RECT = 3;
-	public static final int CIRCLE = 4;
-	public static final int LOOP = 5;
-
 	public ArrayList<PVector> originalPoints;
 	public ArrayList<PVector> bakedPoints;
 
+	public Boolean connectPointsOnDraw = true;
+
 	public Boolean dirty = true;
-	public int type = UNKNOWN;
-	public int drawCount = 0;
+	public int drawnPointCount = -1;
 
 	protected PlotterCanvas canvas;
 
@@ -41,11 +35,15 @@ public class DrawCommand extends GsynlibBase {
 	public void prepare() {
 
 	}
+	
+	public void reset() {
+		this.drawnPointCount = -1;
+	}
 
 	public void bake() {
 		bakedPoints.clear();
 		bakePoints();
-		drawCount = 0;
+		reset();
 		dirty = false;
 	}
 
@@ -64,51 +62,62 @@ public class DrawCommand extends GsynlibBase {
 		bakedPoints.add(p1);
 	}
 
-	public void draw(int type) {
+	public void draw() {
 		app().pushMatrix();
 		app().pushStyle();
 
 		app().noFill();
 		app().stroke(0);
-		
-		if (type == 0) {
-			app().strokeWeight(this.canvas.screenScale * (1f + (this.drawCount>0 ? 2 : 0)));
-		}else {
-			app().strokeWeight(this.canvas.screenScale * 3f);
-		}
 
-		drawBake(type);
+		drawBake();
 
 		app().popMatrix();
 		app().popStyle();
 	}
 
-	public void drawBake(int type) {
+	public void drawBake() {
 
-		if (this.bakedPoints.size() == 1) {
-			PVector p = this.bakedPoints.get(0);
-			app().point(p.x, p.y);
-		} else {
+		PVector initp = null;
 
-			if (type == 0) {
-				app().beginShape();
-				for (PVector bp : this.bakedPoints) {
-					app().vertex(bp.x, bp.y);
-				}
-				app().endShape(OPEN);
-			} else {
-				PVector initp = this.bakedPoints.get(0);
-				for(int i = 1; i < this.bakedPoints.size(); i++) {
-					PVector p = this.bakedPoints.get(i);
-					
-					int r = (int) ((p.x * 2348f) % 255f);
-					int g = (int) ((p.y *10092f) % 255f);
-					int b = (int) ((p.x * p.y * 12333f) % 255f);
-					
-					app().stroke(app().color(r,g,b));
-					app().line(initp.x,initp.y,p.x,p.y);
-					initp = p;
-				}
+		for (int i = 0; i < this.bakedPoints.size(); i++) {
+			PVector p = this.bakedPoints.get(i);
+
+			Boolean debugDrawLine = canvas.debugLinesDI;
+			Boolean drawnPoint = this.drawnPointCount >= i;
+
+			float sweight = 0;
+
+			if (!this.connectPointsOnDraw) {
+				sweight = 1.2f;
+			}else
+				sweight = 1;
+
+			if (debugDrawLine) {
+				sweight += 1;
+			}
+
+			if (drawnPoint) {
+				sweight += 1;
+			}
+
+			int r = (int) ((p.x * 2348f) % 255f);
+			int g = (int) ((p.y * 10092f) % 255f);
+			int b = (int) ((p.x * p.y * 12333f) % 255f);
+
+			if (debugDrawLine)
+				app().stroke(app().color(r, g, b));
+			else
+				app().stroke(0);
+
+			app().strokeWeight(this.canvas.screenScale * sweight);
+
+			if (this.connectPointsOnDraw) {
+				if (initp != null)
+					app().line(initp.x, initp.y, p.x, p.y);
+				initp = p;
+			}
+			else {
+				app().point(p.x, p.y);
 			}
 		}
 	}
