@@ -339,7 +339,7 @@ public class PlotterCanvas extends GsynlibBase {
 		PVector p2 = new PVector(p1.x + p3.x, p1.y);
 		PVector p4 = new PVector(p1.x, p1.y + p3.y);
 
-		//plotter.unsafeClear();
+		// plotter.unsafeClear();
 		plotter.moveTo(p1);
 		plotter.moveTo(p2);
 		plotter.moveTo(p3);
@@ -369,26 +369,27 @@ public class PlotterCanvas extends GsynlibBase {
 			p = dc.bakedPoints.get(i);
 			plotter.moveTo(p.x, p.y);
 		}
-		
+
 		class MarkDrawCommandAsDone extends StatefulCommand {
 			DrawCommand dc = null;
+
 			public MarkDrawCommandAsDone(DrawCommand _dc) {
 				this.dc = _dc;
 			}
-			
+
 			@Override
 			public void execute() {
 				super.execute();
 				this.dc.drawCount++;
 			}
 		}
-		
+
 		plotter.addCommand(new MarkDrawCommandAsDone(dc));
 
 		// PEN UP
 		plotter.penUp();
 	}
-	
+
 	void resetDrawCounts() {
 		for (int i = 0; i < commands.size(); i++) {
 			DrawCommand dc = commands.get(i);
