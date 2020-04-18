@@ -1,4 +1,4 @@
-package gsynlib.vigoxy.functors;
+package gsynlib.vigoxy.commands;
 
 import gsynlib.scheduling.*;
 import gsynlib.vigoxy.*;
@@ -8,7 +8,7 @@ import static processing.core.PApplet.*;
 
 public class MessageSender extends StatefulCommand {
 
-	public static final Boolean verbose = false;
+	public static Boolean verbose = false;
 
 	public Boolean expectAnswer = true;
 
@@ -36,6 +36,10 @@ public class MessageSender extends StatefulCommand {
 
 		this.expectAnswer = _waitForAnswer;
 		this.serial = _serial;
+		
+		if(this.expectAnswer && verbose) {
+			println("MessageSender '" + this.getMessage() + "' waiting...");
+		}
 
 	}
 	
@@ -58,14 +62,11 @@ public class MessageSender extends StatefulCommand {
 			finishCommand();
 			return;
 		}
-		
-		if (verbose)
-			println("Message sender waiting ",this.getMessage(), this.currentTime);
 	}
 
 	public void received(String str) {
 		if (verbose)
-			println("MessageSender received : \n'" + getMessage() + "'", str);
+			println("MessageSender '" + getMessage() + "' received :", str);
 		finishCommand();
 	}
 }

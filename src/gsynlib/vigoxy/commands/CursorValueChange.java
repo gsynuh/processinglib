@@ -1,4 +1,4 @@
-package gsynlib.vigoxy.functors;
+package gsynlib.vigoxy.commands;
 
 import gsynlib.scheduling.StatefulCommand;
 import gsynlib.vigoxy.PlotterXY;
@@ -25,7 +25,8 @@ public class CursorValueChange extends StatefulCommand {
 	public void start() {
 		super.start();
 		
-		float dist = PVector.sub(to, from).mag();
+		float dist =  PVector.dist(to, from) * 1.2f;
+		
 		if (dist > 0.001f) {
 			if (this.pxy.moveState == PlotterXY.MOVE_STATE.FAST) {
 				this.totalTime = dist / this.pxy.fastMoveSpeed;

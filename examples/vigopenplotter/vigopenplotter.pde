@@ -10,6 +10,7 @@ import gsynlib.geom.*;
 import gsynlib.utils.*;
 import gsynlib.scheduling.*;
 import gsynlib.vigoxy.*;
+import gsynlib.vigoxy.commands.*;
 
 import processing.serial.*;
 
@@ -22,15 +23,22 @@ PlotterCanvas canvas;
 
 ControlP5 cp5;
 
+//TODO REEVALUER VITESSE DE PRINT SUR DIAGONALES
+//TODO DITHERING IMAGE
+
+
 void setup() {
   size(800, 800);
   
   GApp.set(this);
+  
+  MessageSender.verbose = true;
 
   String[] serials = Serial.list();
   String portName = serials[serials.length - 1];
     
   plotter = new PlotterXY(portName);
+  plotter.serialVerbose = true;
   plotter.open();
   
   canvas = new PlotterCanvas(plotter);

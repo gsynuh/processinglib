@@ -8,7 +8,7 @@ import gsynlib.base.GsynlibBase;
 import gsynlib.scheduling.*;
 import gsynlib.scheduling.StatefulCommand.RUNSTATE;
 import gsynlib.utils.GApp;
-import gsynlib.vigoxy.functors.*;
+import gsynlib.vigoxy.commands.*;
 import jssc.*;
 import processing.core.*;
 import processing.serial.*;
@@ -31,6 +31,8 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 
 	public int fastMoveSpeed = 72;
 	public int slowMoveSpeed = 1000;
+	
+	public Boolean serialVerbose = false;
 
 	public String helloString = "V4&^CMP*GWFIK5SHA$CPE";
 
@@ -195,13 +197,15 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		send("M3 S0");
 		penUp();
 		SetMoveState(MOVE_STATE.FAST);
+		// help
+		send("$G", true);
 	}
 
 	void SetMoveState(MOVE_STATE s) {
 		if (s == MOVE_STATE.FAST)
-			send("G1 S" + fastMoveSpeed);
+			send("G0 S" + fastMoveSpeed);
 		else {
-			send("G1 F" + slowMoveSpeed);
+			send("G0 F" + slowMoveSpeed);
 		}
 
 		this.moveState = s;
@@ -242,27 +246,35 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 			initResponse();
 		}
 
+		if(serialVerbose)
+			println("RECEIVED STRING: ", receivedString);
+
 		if (receivedString.contains("|")) {
 
 			String[] infos = receivedString.split("\\|", 4);
 			for (String info : infos) {
 				if (info.contains("Pos:")) {
-					
-					println("POS",receivedString);
 
-					String[] poss = info.split(":")[1].split(",");
-					
-					float x = 0;
-					float y = 0;
-					float z = 0;
-					
-					if(poss.length > 0) x = parseFloat(poss[0]);				
-					if(poss.length > 1) y = parseFloat(poss[1]);
-					if(poss.length > 2) z = parseFloat(poss[2]);
+					String[] poss1 = info.split(":");
+					if (poss1.length > 1) {
+						
+						String[] poss = poss1[1].split(",");
 
-					motorPosition.x = x;
-					motorPosition.y = y;
-					motorPosition.z = z;
+						float x = 0;
+						float y = 0;
+						float z = 0;
+
+						if (poss.length > 0)
+							x = parseFloat(poss[0]);
+						if (poss.length > 1)
+							y = parseFloat(poss[1]);
+						if (poss.length > 2)
+							z = parseFloat(poss[2]);
+
+						motorPosition.x = x;
+						motorPosition.y = y;
+						motorPosition.z = z;
+					}
 				}
 			}
 
@@ -290,7 +302,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 			commandsLock.unlock();
 		}
 
-		if (isError) {
+		if (isError && serialVerbose) {
 			println("error " + receivedString);
 		}
 	}
@@ -365,7 +377,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 				pen = PenState.DOWN;
 				super.finishCommand();
 			}
-		},penWaitTimeMS);
+		}, penWaitTimeMS);
 	}
 
 	public void setOrigin(PVector point) {
