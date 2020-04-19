@@ -16,8 +16,8 @@ import static processing.core.PApplet.*;
 public class PlotterCanvas extends GsynlibBase {
 
 	public float screenScale = 1f;
-
-	public float maxLengthToDraw = 15.1f;
+	public float displayPenSize = 1f;
+	public float maxLengthToDraw = 10f;
 	public Boolean debugLinesDI = false;
 
 	protected PlotterXY plotter;

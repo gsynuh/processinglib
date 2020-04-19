@@ -17,7 +17,7 @@ import processing.serial.*;
 import controlP5.*;
 
 float debugMoveSpeed = 10;
-float maxLengthToDraw = 15;
+float maxLengthToDraw = 10;
 PlotterXY plotter;
 PlotterCanvas canvas;
 
@@ -59,6 +59,7 @@ void prepareXY(PlotterCanvas c) {
 
   Bounds canvasArea;
 
+  c.displayPenSize = 2;
   c.backgroundColor = color(255, 255, 255, 0);
   c.canvasColor = color(255);
 
@@ -76,12 +77,13 @@ void prepareXY(PlotterCanvas c) {
   c.pushMatrix();
   c.translate(center.x, center.y -25);
   for (int i = 0; i < 20; i++) {
-    c.rotate(0.2f);
-    c.scale(1.1f);
-    c.rect(-2, -2, 4, 4);
+    c.rotate(0.04f);
+    c.scale(1.06f);
+    c.rect(-5, -5, 10, 10);
   }
   c.popMatrix();
 
+/*
   c.pushMatrix();
   c.translate(center.x, center.y +25);
   c.rotate(-PI);
@@ -129,6 +131,8 @@ void prepareXY(PlotterCanvas c) {
 
   c.rect(cbr.x - 10, cbr.y - 10, 10, 10);
   c.point(cbr.x - 5, cbr.y - 5);
+  
+  */
 }
 
 void draw() {

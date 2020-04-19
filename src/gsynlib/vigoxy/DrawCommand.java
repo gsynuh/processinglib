@@ -20,7 +20,9 @@ public class DrawCommand extends PlotterCommand {
 
 	protected PlotterCanvas canvas;
 
+	
 	public DrawCommand(PlotterCanvas _canvas, PVector... values) {
+		super();
 		this.canvas = _canvas;
 
 		originalPoints = new ArrayList<PVector>();
@@ -97,7 +99,7 @@ public class DrawCommand extends PlotterCommand {
 		app().pushMatrix();
 
 		app().noFill();
-		app().stroke(0);
+		app().colorMode(HSB);
 
 		drawBake();
 
@@ -118,26 +120,24 @@ public class DrawCommand extends PlotterCommand {
 			float sweight = 0;
 
 			if (!this.connectPointsOnDraw)
-				sweight = 1.2f;
+				sweight = canvas.displayPenSize + 0.5f;
 			else
-				sweight = 1f;
+				sweight = canvas.displayPenSize;
 
 			if (debugDrawLine) {
-				sweight += 1f;
+				sweight = max(1f,sweight);
 			}
 
 			if (drawnPoint) {
 				sweight += 1f;
 			}
 
-			int r = (int) ((p.x * 2348f) % 255f);
-			int g = (int) ((p.y * 10092f) % 255f);
-			int b = (int) ((p.x * p.y * 12333f) % 255f);
+			int h = (i * 1320 + this.commandID * 60 + (int)(this.rand*255f)) % 255;
 
 			if (debugDrawLine)
-				app().stroke(app().color(r, g, b));
+				app().stroke(h,255,drawnPoint ? 64 : 255);
 			else
-				app().stroke(0);
+				app().stroke(drawnPoint ? 0 : 64);
 
 			app().strokeWeight(sweight * canvas.screenScale);
 
@@ -157,6 +157,7 @@ public class DrawCommand extends PlotterCommand {
 
 	static ArrayList<PVector> fillList = new ArrayList<PVector>();
 
+	//Subdivide segments based on max length
 	protected void fillBakedPoints() {
 		if (bakedPoints.size() < 2)
 			return;
@@ -167,17 +168,10 @@ public class DrawCommand extends PlotterCommand {
 		fillList.clear();
 		fillList.add(bakedPoints.get(0));
 
-		for (int i = 0; i < bakedPoints.size(); i += 2) {
+		for (int i = 0; i < bakedPoints.size()-1; i++) {
 			
 			PVector start = bakedPoints.get(i);
-			PVector end = null;
-			
-			if(i+1 > bakedPoints.size()-1)
-			{
-				end = bakedPoints.get(bakedPoints.size()-1);
-			}else {
-				end = bakedPoints.get(i + 1);
-			}
+			PVector end = bakedPoints.get(i+1);
 			
 			GApp.helperPoint.set(end);
 			GApp.helperPoint.sub(start);
@@ -188,12 +182,10 @@ public class DrawCommand extends PlotterCommand {
 
 			fillList.add(start);
 
-			float div = round(ceil(mag / this.canvas.maxLengthToDraw));
-			float fillDiv = mag/div;
-
-			if (mag >= this.canvas.maxLengthToDraw) {
-
-				for (float l = 0f; l < mag; l += fillDiv) {
+			if (mag > this.canvas.maxLengthToDraw) {
+				float l = 0f;
+				
+				for (l = 0f; l < mag; l += this.canvas.maxLengthToDraw) {
 
 					PVector p = new PVector();
 
@@ -203,10 +195,13 @@ public class DrawCommand extends PlotterCommand {
 					fillList.add(p);
 				}
 			}
-			
-			fillList.add(end);
 		}
-
+		
+		//ADD END POINT AS FILL STOPS EARLY.
+		fillList.add(bakedPoints.get(bakedPoints.size()-1).copy());
+		
+		
+		//COPY FILL POINTS TO BAKED POINTS
 		bakedPoints.clear();
 		for (int i = 0; i < fillList.size(); i++)
 			bakedPoints.add(fillList.get(i));
