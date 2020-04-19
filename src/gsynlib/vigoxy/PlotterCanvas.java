@@ -397,7 +397,6 @@ public class PlotterCanvas extends GsynlibBase {
 
 	void startDrawCommand() {
 		System.gc();
-		plotter.penReset();
 		plotter.penUp();
 		plotter.backToOrigin();
 	}
@@ -543,7 +542,6 @@ public class PlotterCanvas extends GsynlibBase {
 	public void print() {
 		resetDrawCommands();
 		startDrawCommand();
-		println("PRINT");
 
 		for (int i = 0; i < commands.size(); i++) {
 
@@ -561,7 +559,6 @@ public class PlotterCanvas extends GsynlibBase {
 	public void testPrint() {
 		resetDrawCommands();
 		startDrawCommand();
-		println("TEST PRINT");
 
 		for (int i = 0; i < commands.size(); i++) {
 			PlotterCommand c = commands.get(i);

@@ -16,10 +16,14 @@ public abstract class StatefulCommand extends GsynlibBase {
 
 	public long startTime = 0;
 	public float currentTime = 0;
-	public float totalTime = -1;
+	public float totalTimeSeconds = -1;
 	public float normalizedTime = 0;
 	
 	public RUNSTATE state = RUNSTATE.CREATED;
+	
+	public StatefulCommand() {
+		super();
+	}
 
 	public void start() {
 		startTime = System.currentTimeMillis();
@@ -40,8 +44,8 @@ public abstract class StatefulCommand extends GsynlibBase {
 	
 	protected void updateTime() {
 		calcCurrentTime();
-		if(totalTime >= 0f) {
-			normalizedTime = map(currentTime, 0f, totalTime, 0f, 1f);
+		if(totalTimeSeconds >= 0f) {
+			normalizedTime = map(currentTime, 0f, totalTimeSeconds, 0f, 1f);
 			normalizedTime = constrain(normalizedTime,0f,1f);
 		} else {
 			normalizedTime = 1f;

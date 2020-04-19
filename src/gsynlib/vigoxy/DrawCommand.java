@@ -135,9 +135,9 @@ public class DrawCommand extends PlotterCommand {
 			int h = (i * 1320 + this.commandID * 60 + (int)(this.rand*255f)) % 255;
 
 			if (debugDrawLine)
-				app().stroke(h,255,drawnPoint ? 64 : 255);
+				app().stroke(h,255,drawnPoint ? 128 : 255);
 			else
-				app().stroke(drawnPoint ? 0 : 64);
+				app().stroke(drawnPoint ? 0 : 128);
 
 			app().strokeWeight(sweight * canvas.screenScale);
 
@@ -166,9 +166,8 @@ public class DrawCommand extends PlotterCommand {
 			return;
 
 		fillList.clear();
-		fillList.add(bakedPoints.get(0));
 
-		for (int i = 0; i < bakedPoints.size()-1; i++) {
+		for (int i = 0; i < bakedPoints.size() - 1; i++) {
 			
 			PVector start = bakedPoints.get(i);
 			PVector end = bakedPoints.get(i+1);
@@ -200,8 +199,7 @@ public class DrawCommand extends PlotterCommand {
 		//ADD END POINT AS FILL STOPS EARLY.
 		fillList.add(bakedPoints.get(bakedPoints.size()-1).copy());
 		
-		
-		//COPY FILL POINTS TO BAKED POINTS
+		//COPY FILL POINTS
 		bakedPoints.clear();
 		for (int i = 0; i < fillList.size(); i++)
 			bakedPoints.add(fillList.get(i));

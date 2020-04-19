@@ -179,13 +179,22 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	public void close() {
 		this.penUp();
 		this.backToOrigin();
-		serialPort.stop();
-		scheduler.stop();
-	}
-
-	public void QueueCommand(StatefulCommand f, float waitSeconds) {
-		f.totalTime = waitSeconds / 1000f;
-		QueueCommand(f);
+		send("!",true);
+		
+		class CloseCommand extends StatefulCommand {
+			PlotterXY p;
+			public CloseCommand(PlotterXY plotter) {
+				this.p = plotter;
+			}
+			@Override public void start() {
+				super.start();
+				this.p.serialPort.stop();
+				this.p.scheduler.stop();
+				super.finishCommand();
+			}
+		}
+		
+		this.commands.add(new CloseCommand(this));
 	}
 
 	public void QueueCommand(StatefulCommand f) {
@@ -200,11 +209,10 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	}
 
 	void initResponse() {
-		penUp();
 		SetMoveState(MOVE_STATE.FAST);
-
+		penUp();
 		// $ = help, $G list GCode commands
-		// send("$G", true);
+		send("$G", true);
 	}
 
 	void SetMoveState(MOVE_STATE s) {
@@ -231,12 +239,18 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 			try {
 				String str = this.serialPort.readString();
 
+				while (str != null && str.startsWith(" ")) {
+					str = str.substring(1);
+				}
+				if (str != null)
+					str = str.trim();
+
 				if (!GApp.isNullOrEmpty(str)) {
 
 					if (GApp.isNullOrEmpty(incomingSerialMessage))
 						incomingSerialMessage = str;
 					else
-						incomingSerialMessage += str + "\n";
+						incomingSerialMessage += str + " \n";
 				}
 			} finally {
 				serialReadLock.unlock();
@@ -330,6 +344,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 	// clear queued commands and back to origin
 	public void clearXYCommands() {
 		unsafeClear();
+		penUp();
 		backToOrigin();
 		penUp();
 		System.gc();
@@ -353,45 +368,32 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		System.gc();
 	}
 
-	int penWaitTimeMS = 500;
+	float penWaitTimeSeconds = 0.5f;
 
 	public void penUp() {
-		send("M5 S950", true);
-		dwell(penWaitTimeMS);
+		send("M5 S800", true);
+		moveRelative(0, 0);
 		QueueCommand(new StatefulCommand() {
 			@Override
-			public void execute() {
-				println("PEN UP");
+			public void start() {
 				pen = PenState.UP;
 				super.finishCommand();
 			}
-		}, penWaitTimeMS);
-	}
-
-	public void penReset() {
-		send("S800", true);
-		dwell(penWaitTimeMS);
-		QueueCommand(new StatefulCommand() {
-			@Override
-			public void execute() {
-				println("PEN RESET");
-				pen = PenState.UNKNOWN;
-				super.finishCommand();
-			}
-		}, penWaitTimeMS);
+		});
+		dwell(penWaitTimeSeconds);
 	}
 
 	public void penDown() {
 		send("M3 S950", true);
-		dwell(penWaitTimeMS);
+		moveRelative(0, 0);
 		QueueCommand(new StatefulCommand() {
 			@Override
-			public void execute() {
-				println("PEN DOWN");
+			public void start() {
 				pen = PenState.DOWN;
 				super.finishCommand();
 			}
-		}, penWaitTimeMS);
+		});
+		dwell(penWaitTimeSeconds);
 	}
 
 	public void setOrigin(PVector point) {
@@ -445,26 +447,31 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 		send(cmd + createPositionString(x, y) + " " + endCMD, expectAnswer);
 	}
 
-	public void dwell(float timeInMs) {
-		send("G4 P" + setFloatPrecision(((float) timeInMs) / 1000f), true);
+	public void dwell(float dwellTimeSeconds) {
+		String dwellString = setFloatPrecision(dwellTimeSeconds);
+		send("G4 P" + dwellString, true);
+		// JUST WAIT.
+		StatefulCommand dwellWait = new StatefulCommand() {
+			@Override
+			public void start() {
+				super.start();
+			}
+		};
+		dwellWait.totalTimeSeconds = dwellTimeSeconds;
+		QueueCommand(dwellWait);
 	}
 
 	String createPositionString(float x, float y) {
 		return " X" + setFloatPrecision(x) + " Y" + setFloatPrecision(-y) + " Z0 ";
 	}
 
-	String formatStringForMessage(double d) {
-		if (d == (long) d)
-			return String.format("%d", (long) d);
-		else
-			return String.format("%s", d);
+	String formatValueForMessage(float floatValue) {
+		return String.format("%.3f", floatValue);
 	}
 
-	float precision = 1000;
-
 	public String setFloatPrecision(float value) {
-		float v = round(value * precision) / precision;
-		return formatStringForMessage(v);
+		float v = round(value * 1000f) / 1000f;
+		return formatValueForMessage(v);
 	}
 
 	public String processSendStringFormat(String str) {
@@ -484,7 +491,7 @@ public class PlotterXY extends GsynlibBase implements SerialPortEventListener {
 
 	public void send(String str, Boolean expectAnswer) {
 		str = processSendStringFormat(str);
-		QueueCommand(new MessageSender(this.serialPort, expectAnswer, true, null, str.getBytes(), null));
+		QueueCommand(new MessageSender(this.serialPort, expectAnswer, true, str.getBytes()));
 	}
 
 }

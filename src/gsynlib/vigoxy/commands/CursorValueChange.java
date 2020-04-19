@@ -29,9 +29,9 @@ public class CursorValueChange extends StatefulCommand {
 		
 		if (dist > 0.001f) {
 			if (this.pxy.moveState == PlotterXY.MOVE_STATE.FAST) {
-				this.totalTime = dist / this.pxy.fastMoveSpeed;
+				this.totalTimeSeconds = dist / this.pxy.fastMoveSpeed;
 			} else if (this.pxy.moveState == PlotterXY.MOVE_STATE.PRECISE) {
-				this.totalTime = dist / (this.pxy.slowMoveSpeed * 0.01f);
+				this.totalTimeSeconds = dist / (this.pxy.slowMoveSpeed * 0.01f);
 			}
 		}
 	}
@@ -47,6 +47,7 @@ public class CursorValueChange extends StatefulCommand {
 			this.ref.x = this.to.x;
 			this.ref.y = this.to.y;
 			execute();
+			super.finishCommand();
 		}
 	}
 }

@@ -67,25 +67,25 @@ void prepareXY(PlotterCanvas c) {
   c.setDrawBounds(new Bounds(0, 150, width, height-255));
 
   PVector cbr = canvasArea.getBottomRight();
-
-  c.rect(0, 0, 10, 10);
-  c.point(5, 5);
-
   PVector center = canvasArea.getCenter();
 
+  //c.rect(0, 0, 10, 10);
+  //c.point(5, 5);
 
   c.pushMatrix();
   c.translate(center.x, center.y -25);
+  c.rotate(PI/4);
   for (int i = 0; i < 20; i++) {
-    c.rotate(0.04f);
-    c.scale(1.06f);
-    c.rect(-5, -5, 10, 10);
+    c.rotate(0.008f * i);
+    c.scale(1.1f);
+    c.rect(-2.5, -2.5, 5, 5);
   }
   c.popMatrix();
 
-/*
+
+
   c.pushMatrix();
-  c.translate(center.x, center.y +25);
+  c.translate(center.x - 25, center.y +25);
   c.rotate(-PI);
   for (int i = 0; i < 30; i++) {
     float a = i * PI/12;
@@ -95,44 +95,62 @@ void prepareXY(PlotterCanvas c) {
   }
   c.popMatrix();
 
-
   c.pushMatrix();
-  c.translate(90, 35);
-  c.scale(0.25);
-  c.rotate(PI/2);
-
-  c.image(catImage, 20, 20, 30, 30);
-
-  for (int i = 0; i < 4; i++) {
-    PVector p1 = c.getRandomPointOnCanvas();
-    float rad = random(5, 20);
-    p1.x = constrain(p1.x, canvasArea.position.x + rad, canvasArea.position.x + canvasArea.size.x - rad);
-    p1.y = constrain(p1.y, canvasArea.position.y + rad, canvasArea.position.y + canvasArea.size.y - rad);
-    c.circle(p1.x, p1.y, rad);
+  c.translate(center.x + 25, center.y +25);
+  c.rotate(-PI);
+  float rad = 10;
+  float numCircles = 24;
+  float ang = numCircles/TWO_PI;
+  for (int i = 0; i < numCircles; i++) {
+    float a = i * ang;
+    float x = cos(a) * rad;
+    float y = sin(a) * rad;
+    c.circle(x, y, rad);
   }
 
-
-  c.beginShape();
-  for (int i = 0; i < 4; i++) {
-    PVector p1 = c.getRandomPointOnCanvas();
-    c.vertex(p1.x, p1.y);
+  rad = 4;
+  for (int i = 0; i < 3; i++) {
+    rad += 2;
+    c.circle(0, 0, rad);
   }
-  c.endShape(true);
-
-  for (int i = 0; i < 2; i++) {
-    PVector p1 = c.getRandomPointOnCanvas();
-    PVector p2 = c.getRandomPointOnCanvas();
-    c.line(p1.x, p1.y, p2.x, p2.y);
-  }
-
-
-  c.bezierLoop(2, 10, 10, canvasArea.size.x - 20, canvasArea.size.y - 20);
   c.popMatrix();
 
-  c.rect(cbr.x - 10, cbr.y - 10, 10, 10);
-  c.point(cbr.x - 5, cbr.y - 5);
-  
-  */
+  /*
+   c.pushMatrix();
+   c.translate(90, 35);
+   c.scale(0.25);
+   c.rotate(PI/2);
+   
+   c.image(catImage, 20, 20, 30, 30);
+   
+   for (int i = 0; i < 4; i++) {
+   PVector p1 = c.getRandomPointOnCanvas();
+   float rad = random(5, 20);
+   p1.x = constrain(p1.x, canvasArea.position.x + rad, canvasArea.position.x + canvasArea.size.x - rad);
+   p1.y = constrain(p1.y, canvasArea.position.y + rad, canvasArea.position.y + canvasArea.size.y - rad);
+   c.circle(p1.x, p1.y, rad);
+   }
+   
+   
+   c.beginShape();
+   for (int i = 0; i < 4; i++) {
+   PVector p1 = c.getRandomPointOnCanvas();
+   c.vertex(p1.x, p1.y);
+   }
+   c.endShape(true);
+   
+   for (int i = 0; i < 2; i++) {
+   PVector p1 = c.getRandomPointOnCanvas();
+   PVector p2 = c.getRandomPointOnCanvas();
+   c.line(p1.x, p1.y, p2.x, p2.y);
+   }
+   
+   
+   c.bezierLoop(2, 10, 10, canvasArea.size.x - 20, canvasArea.size.y - 20);
+   c.popMatrix();*/
+
+  //c.rect(cbr.x - 10, cbr.y - 10, 10, 10);
+  //c.point(cbr.x - 5, cbr.y - 5);
 }
 
 void draw() {
