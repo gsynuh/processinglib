@@ -29,6 +29,7 @@ public class GApp {
 	}
 	
 	public static final PVector helperPoint = new PVector();
+	public static final PVector helperPoint2 = new PVector();
 	
 	public static int color(int r, int g, int b, int a) {
 		r = r & 0xFF;

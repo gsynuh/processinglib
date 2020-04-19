@@ -21,7 +21,7 @@ public class PlotterCanvas extends GsynlibBase {
 	public Boolean debugLinesDI = false;
 
 	protected PlotterXY plotter;
-	protected ArrayList<DrawCommand> commands;
+	protected ArrayList<PlotterCommand> commands;
 
 	Boolean prepared = false;
 
@@ -42,7 +42,7 @@ public class PlotterCanvas extends GsynlibBase {
 
 	public PlotterCanvas(PlotterXY pxy) {
 		this.plotter = pxy;
-		this.commands = new ArrayList<DrawCommand>();
+		this.commands = new ArrayList<PlotterCommand>();
 
 		app().registerMethod("draw", this);
 		getMethods();
@@ -90,8 +90,11 @@ public class PlotterCanvas extends GsynlibBase {
 			e.printStackTrace();
 		}
 
-		for (DrawCommand c : commands) {
-			c.prepare();
+		for (PlotterCommand c : commands) {
+			if (c instanceof DrawCommand) {
+				DrawCommand dc = (DrawCommand) c;
+				dc.prepare();
+			}
 		}
 
 		prepared = true;
@@ -108,21 +111,36 @@ public class PlotterCanvas extends GsynlibBase {
 			println("A shape has begun and not ended");
 		}
 
-		reset();
+		for (int i = 0; i < commands.size(); i++) {
+			PlotterCommand c = commands.get(i);
+			if (c instanceof DrawCommand) {
+				DrawCommand dc = (DrawCommand) c;
+				dc.reset();
+			}
+		}
+		
+		BakeTransformStack.reset();
+		for (int i = 0; i < commands.size(); i++) {
+			PlotterCommand c = commands.get(i);
+			if (c instanceof DrawCommand) {
+				DrawCommand dc = (DrawCommand) c;
+				dc.bake(BakeTransformStack.getFinalMatrix());
+			} else if (c instanceof TransformCommand) {
+				TransformCommand tc = (TransformCommand) c;
+				tc.ApplyCommandToTStack(BakeTransformStack);
+			}
+		}
 	}
 
 //------------------- DRAW COMMANDS --------------------
 
 	public void clear() {
+		BakeTransformStack.reset();
 		commands.clear();
+		prepared = false;
 	}
 
-	public void reset() {
-		for (DrawCommand dc : commands) {
-			dc.reset();
-			dc.bake();
-		}
-	}
+	TransformStack BakeTransformStack = new TransformStack();
 
 	public void image(PImage im, float x, float y, float w, float h) {
 		Bounds imageArea = new Bounds(x, y, w, h);
@@ -154,7 +172,7 @@ public class PlotterCanvas extends GsynlibBase {
 						float u = (float) x / (float) this.ditherFilter.width;
 						float v = (float) y / (float) this.ditherFilter.height;
 						if (c.r <= 0.2f) {
-							PVector p = this.bounds.getPositionFromNorm(u, v);
+							PVector p = TransformPoint(this.bounds.getPositionFromNorm(u, v));
 							bakedPoints.add(p);
 						}
 					}
@@ -180,9 +198,8 @@ public class PlotterCanvas extends GsynlibBase {
 			@Override
 			public void bakePoints() {
 				for (int i = 0; i < loop.getBakedPoints().size(); i++) {
-					PVector p = loop.getBakedPoints().get(i);
-					bakeFill(p);
-					bakedPoints.add(p);
+					PVector p = loop.getBakedPoints().get(i).copy();
+					bakedPoints.add(TransformPoint(p));
 				}
 			}
 		}
@@ -202,7 +219,7 @@ public class PlotterCanvas extends GsynlibBase {
 			@Override
 			public void bakePoints() {
 				PVector p = originalPoints.get(0);
-				bakedPoints.add(p.copy());
+				bakedPoints.add(TransformPoint(p.copy()));
 			}
 		}
 
@@ -222,19 +239,15 @@ public class PlotterCanvas extends GsynlibBase {
 				PVector pos = originalPoints.get(0);
 				PVector size = originalPoints.get(1);
 
-				PVector p1 = pos.copy();
-				PVector p2 = new PVector(pos.x + size.x, pos.y);
-				PVector p3 = new PVector(pos.x + size.x, pos.y + size.y);
-				PVector p4 = new PVector(pos.x, pos.y + size.y);
+				PVector p1 = TransformPoint(pos.copy());
+				PVector p2 = TransformPoint(new PVector(pos.x + size.x, pos.y));
+				PVector p3 = TransformPoint(new PVector(pos.x + size.x, pos.y + size.y));
+				PVector p4 = TransformPoint(new PVector(pos.x, pos.y + size.y));
 
 				bakedPoints.add(p1);
-				bakeFill(p2);
 				bakedPoints.add(p2);
-				bakeFill(p3);
 				bakedPoints.add(p3);
-				bakeFill(p4);
 				bakedPoints.add(p4);
-				bakeFill(p1);
 				bakedPoints.add(p1);
 			}
 		}
@@ -251,11 +264,9 @@ public class PlotterCanvas extends GsynlibBase {
 
 			@Override
 			public void bakePoints() {
-				PVector p1 = originalPoints.get(0);
-				PVector p2 = originalPoints.get(1);
-
+				PVector p1 = TransformPoint(originalPoints.get(0));
+				PVector p2 = TransformPoint(originalPoints.get(1));
 				bakedPoints.add(p1);
-				bakeFill(p2);
 				bakedPoints.add(p2);
 
 			}
@@ -298,13 +309,11 @@ public class PlotterCanvas extends GsynlibBase {
 				float aDiv = TWO_PI / divA;
 
 				for (int i = 0; i <= divA; i++) {
-					PVector p = new PVector(cos(i * aDiv) * r + pa.x, sin(i * aDiv) * r + pa.y);
-
-					bakeFill(p);
+					PVector p = TransformPoint(new PVector(cos(i * aDiv) * r + pa.x, sin(i * aDiv) * r + pa.y));
 					bakedPoints.add(p);
 				}
 
-				PVector p = new PVector(cos(0) * r + pa.x, sin(0) * r + pa.y);
+				PVector p = TransformPoint(new PVector(cos(0) * r + pa.x, sin(0) * r + pa.y));
 				bakedPoints.add(p);
 
 			}
@@ -337,9 +346,57 @@ public class PlotterCanvas extends GsynlibBase {
 		pendingCommand = null;
 	}
 
+//--------------------- TRANSFORM ----------------------
+
+	public void pushMatrix() {
+		TransformCommand tc = new TransformCommand();
+		tc.type = TransformCommand.TXTYPE.PUSH;
+		tc.name += "pushMatrix";
+		this.commands.add(tc);
+	}
+	
+	public void popMatrix() {
+		TransformCommand tc = new TransformCommand();
+		tc.type = TransformCommand.TXTYPE.POP;
+		tc.name += "popMatrix";
+		this.commands.add(tc);
+	}
+
+	public void translate(float tx, float ty) {
+		PMatrix2D mat = new PMatrix2D();
+		mat.translate(tx, ty);
+		TransformCommand tc = new TransformCommand(mat);
+		tc.type = TransformCommand.TXTYPE.MAT;
+		tc.name += "translate " + tx + " " + ty;
+		this.commands.add(tc);
+	}
+
+	public void rotate(float r) {
+		PMatrix2D mat = new PMatrix2D();
+		mat.rotate(r);
+		TransformCommand tc = new TransformCommand(mat);
+		tc.type = TransformCommand.TXTYPE.MAT;
+		tc.name += "rotate " + r;
+		this.commands.add(tc);
+	}
+
+	public void scale(float s) {
+		scale(s, s);
+	}
+
+	public void scale(float sx, float sy) {
+		PMatrix2D mat = new PMatrix2D();
+		mat.scale(sx, sy);
+		TransformCommand tc = new TransformCommand(mat);
+		tc.type = TransformCommand.TXTYPE.MAT;
+		tc.name += "scale " + sx + " " + sy;
+		this.commands.add(tc);
+	}
+
 //------------------- DRAW COMMANDS --------------------
 
 	void startDrawCommand() {
+		System.gc();
 		plotter.penReset();
 		plotter.penUp();
 		plotter.backToOrigin();
@@ -348,7 +405,7 @@ public class PlotterCanvas extends GsynlibBase {
 	void endDrawCommand() {
 		plotter.penUp();
 		plotter.backToOrigin();
-		
+
 		plotter.addCommand(new StatefulCommand() {
 			@Override
 			public void start() {
@@ -357,9 +414,19 @@ public class PlotterCanvas extends GsynlibBase {
 				finishCommand();
 			}
 		});
+
+		plotter.addCommand(new StatefulCommand() {
+			@Override
+			public void start() {
+				super.start();
+				System.gc();
+				finishCommand();
+			}
+		});
 	}
 
 	public void showBounds() {
+		System.gc();
 		showBounds(0);
 	}
 
@@ -408,8 +475,8 @@ public class PlotterCanvas extends GsynlibBase {
 
 	void printCommand(DrawCommand dc, Boolean penDown) {
 
-		//DRAW PROGRESS COMMANDS
-		
+		// DRAW PROGRESS COMMANDS
+
 		class CommandDrawProgress extends StatefulCommand {
 			DrawCommand dc = null;
 
@@ -424,21 +491,21 @@ public class PlotterCanvas extends GsynlibBase {
 				super.finishCommand();
 			}
 		}
-		
-		//DRAW COMMAND 
-		
-		
+
+		// DRAW COMMAND
+
 		// FORCE UP
 		plotter.penUp();
 		// MOVE TO INITIAL POINT
 		PVector p = dc.bakedPoints.get(0);
+
 		plotter.moveTo(p.x, p.y);
 
 		if (dc.connectPointsOnDraw) {
 
 			if (penDown)
 				plotter.penDown();
-			
+
 			plotter.addCommand(new CommandDrawProgress(dc));
 			// DRAW PATH
 			for (int i = 1; i < dc.bakedPoints.size(); i++) {
@@ -448,7 +515,7 @@ public class PlotterCanvas extends GsynlibBase {
 			}
 
 		} else {
-			
+
 			for (int i = 0; i < dc.bakedPoints.size(); i++) {
 				p = dc.bakedPoints.get(i);
 				plotter.moveTo(p.x, p.y);
@@ -465,8 +532,11 @@ public class PlotterCanvas extends GsynlibBase {
 
 	void resetDrawCommands() {
 		for (int i = 0; i < commands.size(); i++) {
-			DrawCommand dc = commands.get(i);
-			dc.reset();
+			PlotterCommand c = commands.get(i);
+			if (c instanceof DrawCommand) {
+				DrawCommand dc = (DrawCommand) c;
+				dc.reset();
+			}
 		}
 	}
 
@@ -476,8 +546,13 @@ public class PlotterCanvas extends GsynlibBase {
 		println("PRINT");
 
 		for (int i = 0; i < commands.size(); i++) {
-			DrawCommand dc = commands.get(i);
-			printCommand(dc, true);
+
+			PlotterCommand c = commands.get(i);
+
+			if (c instanceof DrawCommand) {
+				DrawCommand dc = (DrawCommand) c;
+				printCommand(dc, true);
+			}
 		}
 
 		endDrawCommand();
@@ -489,8 +564,11 @@ public class PlotterCanvas extends GsynlibBase {
 		println("TEST PRINT");
 
 		for (int i = 0; i < commands.size(); i++) {
-			DrawCommand dc = commands.get(i);
-			printCommand(dc, false);
+			PlotterCommand c = commands.get(i);
+			if (c instanceof DrawCommand) {
+				DrawCommand dc = (DrawCommand) c;
+				printCommand(dc, false);
+			}
 		}
 
 		endDrawCommand();
@@ -530,9 +608,15 @@ public class PlotterCanvas extends GsynlibBase {
 	void drawCommands() {
 		app().pushStyle();
 		app().pushMatrix();
-		for (DrawCommand dc : commands) {
-			dc.draw();
+
+		for (int i = 0; i < commands.size(); i++) {
+			PlotterCommand c = commands.get(i);
+			if (c instanceof DrawCommand) {
+				DrawCommand dc = (DrawCommand) c;
+				dc.draw();
+			}
 		}
+
 		app().popMatrix();
 		app().popStyle();
 	}
@@ -566,7 +650,7 @@ public class PlotterCanvas extends GsynlibBase {
 
 		app().fill(0);
 		app().textSize(size * 0.2f);
-		app().text("CD" + printVec(displayCursor), size * 0.2f, - size * 0.4f);
+		app().text("CD" + printVec(displayCursor), size * 0.2f, -size * 0.4f);
 
 		app().popMatrix();
 	}
