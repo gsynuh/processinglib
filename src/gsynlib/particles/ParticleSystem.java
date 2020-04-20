@@ -1,17 +1,16 @@
 package gsynlib.particles;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
+import java.util.*;
+import gsynlib.geom.*;
 import processing.core.*;
 
 public class ParticleSystem {
 
 	public ArrayList<Particle> particles = new ArrayList<Particle>();
-	public VectorField forceField;
+	public ForceField forceField;
 	
-	public ParticleSystem() {
-		this.forceField = new VectorField();
+	public ParticleSystem(Bounds initialBounds) {
+		this.forceField = new ForceField(initialBounds);
 	}
 	
 	public void init() {
@@ -65,6 +64,7 @@ public class ParticleSystem {
 	}
 	
 	public void clear() {
+		forceField.clear();
 		particles.clear();
 	}
 }

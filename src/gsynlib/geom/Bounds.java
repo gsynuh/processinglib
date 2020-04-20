@@ -1,13 +1,14 @@
 package gsynlib.geom;
+
 import gsynlib.base.*;
 import processing.core.*;
 import static processing.core.PApplet.*;
 
 public class Bounds extends GsynlibBase {
-	
+
 	float minA = -Float.MAX_VALUE;
 	float maxA = Float.MAX_VALUE;
-	
+
 	public PVector position = new PVector();
 	public PVector size = new PVector();
 
@@ -25,7 +26,7 @@ public class Bounds extends GsynlibBase {
 		position.y -= m;
 		size.set(m * 2, m * 2);
 	}
-	
+
 	public Bounds(PVector _pos, PVector _size) {
 		position.set(_pos);
 		size.set(_size);
@@ -38,26 +39,34 @@ public class Bounds extends GsynlibBase {
 		size.y = _h;
 	}
 
+	public void floorValues() {
+		position.x = floor(position.x);
+		position.y = floor(position.y);
+		size.x = floor(size.x);
+		size.y = floor(size.y);
+	}
+
+	public void roundValues() {
+		position.x = round(position.x);
+		position.y = round(position.y);
+		size.x = round(size.x);
+		size.y = round(size.y);
+	}
+
 	public void copyFrom(Bounds b) {
 		this.position.set(b.position);
 		this.size.set(b.size);
 	}
-	
+
 	public PVector getRandom() {
-		return new PVector(
-				position.x + app().random(0,size.x),
-				position.y + app().random(0,size.y)
-				);
+		return new PVector(position.x + app().random(0, size.x), position.y + app().random(0, size.y));
 	}
-	
+
 	public PVector getPositionFromNorm(float x, float y) {
-		x = constrain(x,0f,1f);
-		y = constrain(y,0f,1f);
-		
-		return new PVector(
-				this.position.x + x*this.size.x,
-				this.position.y + y*this.size.y
-				);
+		x = constrain(x, 0f, 1f);
+		y = constrain(y, 0f, 1f);
+
+		return new PVector(this.position.x + x * this.size.x, this.position.y + y * this.size.y);
 	}
 
 	public PVector getCenter() {
@@ -74,14 +83,14 @@ public class Bounds extends GsynlibBase {
 	public void Encapsulate(PVector p) {
 		this.Encapsulate(new Bounds(p));
 	}
-	
+
 	public void Inflate(float _size) {
-		
+
 		this.position.x += _size;
 		this.position.y += _size;
 		this.size.x += _size * 2f;
 		this.size.y += _size * 2f;
-		
+
 		this.size.x = this.size.x < 0 ? 0 : this.size.x;
 		this.size.y = this.size.y < 0 ? 0 : this.size.y;
 	}
@@ -100,6 +109,17 @@ public class Bounds extends GsynlibBase {
 		Boolean cv = p.y >= position.y && p.y <= position.y + size.y;
 
 		return ch && cv;
+	}
+
+	public Boolean Contains(PVector p, Boolean excludeBorders) {
+		if (!excludeBorders) {
+			return Contains(p);
+		} else {
+			Boolean ch = p.x > position.x && p.x < position.x + size.x;
+			Boolean cv = p.y > position.y && p.y < position.y + size.y;
+
+			return ch && cv;
+		}
 	}
 
 	public void Encapsulate(Bounds b) {

@@ -9,6 +9,7 @@ import gsynlib.base.GsynlibBase;
 import gsynlib.bezier.*;
 import gsynlib.geom.*;
 import gsynlib.image.*;
+import gsynlib.particles.*;
 import gsynlib.scheduling.*;
 import processing.core.*;
 import static processing.core.PApplet.*;
@@ -27,6 +28,13 @@ public class PlotterCanvas extends GsynlibBase {
 
 	Bounds bounds = new Bounds();
 	Bounds drawBounds = new Bounds();
+	
+	// REFLECTION (get PApplet prepare method if it exists)
+	Method externalPrepareMethodA;
+	Method externalPrepareMethodB;
+	
+	//PARTICLES
+	ParticleSystem particleSystem;
 
 	public Bounds getBounds() {
 		return this.bounds;
@@ -36,9 +44,6 @@ public class PlotterCanvas extends GsynlibBase {
 		return this.bounds.getRandom();
 	}
 
-	// REFLECTION (get PApplet prepare method if it exists)
-	Method externalPrepareMethodA;
-	Method externalPrepareMethodB;
 
 	public PlotterCanvas(PlotterXY pxy) {
 		this.plotter = pxy;
@@ -89,6 +94,8 @@ public class PlotterCanvas extends GsynlibBase {
 			println("Couldn't call prepareXY on", app());
 			e.printStackTrace();
 		}
+		
+		this.particleSystem = new ParticleSystem(this.bounds);
 
 		for (PlotterCommand c : commands) {
 			if (c instanceof DrawCommand) {
@@ -96,10 +103,15 @@ public class PlotterCanvas extends GsynlibBase {
 				dc.prepare();
 			}
 		}
+		
 
 		prepared = true;
 	}
 
+	//------------------- BAKE DRAWING --------------------
+	
+	TransformStack BakeTransformStack = new TransformStack();
+	
 	public void bake() {
 
 		if (!prepared) {
@@ -135,12 +147,15 @@ public class PlotterCanvas extends GsynlibBase {
 //------------------- DRAW COMMANDS --------------------
 
 	public void clear() {
+		this.particleSystem.clear();
 		BakeTransformStack.reset();
 		commands.clear();
 		prepared = false;
 	}
-
-	TransformStack BakeTransformStack = new TransformStack();
+	
+	public void particle(PVector pos, PVector vel, float lifeTime) {
+		Particle p = this.particleSystem.createParticle(pos,vel,lifeTime);
+	}
 
 	public void image(PImage im, float x, float y, float w, float h) {
 		Bounds imageArea = new Bounds(x, y, w, h);

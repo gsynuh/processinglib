@@ -35,23 +35,28 @@ public class CurveSegment extends GsynlibBase {
 	public void setTrangent(int i, float angle, float dist) {
 		PVector tp = i == 0 ? this.p2 : this.p3;
 		PVector p = i == 0 ? this.p1 : this.p4;
+		
+		PVector h = GApp.getVector();
 
-		GApp.helperPoint.x = cos(angle) * dist;
-		GApp.helperPoint.y = sin(angle) * dist;
-		GApp.helperPoint.add(p);
+		h.x = cos(angle) * dist;
+		h.y = sin(angle) * dist;
+		h.add(p);
 
-		tp.set(GApp.helperPoint);
+		tp.set(h);
+		GApp.disposeVector(h);
 
 		createTangents();
 	}
 
 	void createTangents() {
-		GApp.helperPoint.set(p2);
-		GApp.helperPoint.sub(p1);
-		t1.set(GApp.helperPoint);
-		GApp.helperPoint.set(p3);
-		GApp.helperPoint.sub(p4);
-		t2.set(GApp.helperPoint);
+		PVector h = GApp.getVector();
+		h.set(p2);
+		h.sub(p1);
+		t1.set(h);
+		h.set(p3);
+		h.sub(p4);
+		t2.set(h);
+		GApp.disposeVector(h);
 	}
 
 	public PVector sampleCurve(float t, Boolean reverse) {

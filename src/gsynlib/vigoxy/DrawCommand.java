@@ -62,16 +62,18 @@ public class DrawCommand extends PlotterCommand {
 
 	protected void TransformPoint(int index) {
 		PVector bp = bakedPoints.get(index);
-		GApp.helperPoint.set(0, 0);
-		currentMatrix.mult(bp, GApp.helperPoint);
-		bp.set(GApp.helperPoint);
+		PVector h = GApp.getVector();
+		currentMatrix.mult(bp, h);
+		bp.set(h);
+		GApp.disposeVector(h);
 		bakedPoints.set(index, bp);
 	}
 
 	protected PVector TransformPoint(PVector p) {
-		GApp.helperPoint.set(0, 0);
-		currentMatrix.mult(p, GApp.helperPoint);
-		p.set(GApp.helperPoint);
+		PVector h = GApp.getVector();
+		currentMatrix.mult(p, h);
+		p.set(h);
+		GApp.disposeVector(h);
 		return p;
 	}
 
@@ -166,18 +168,20 @@ public class DrawCommand extends PlotterCommand {
 			return;
 
 		fillList.clear();
+		
+		PVector h = GApp.getVector();
 
 		for (int i = 0; i < bakedPoints.size() - 1; i++) {
 			
 			PVector start = bakedPoints.get(i);
 			PVector end = bakedPoints.get(i+1);
 			
-			GApp.helperPoint.set(end);
-			GApp.helperPoint.sub(start);
 			
-			PVector rel = GApp.helperPoint.copy();
-			float mag = rel.mag();
-			float a = rel.heading();
+			h.set(end);
+			h.sub(start);
+			
+			float mag = h.mag();
+			float a = h.heading();
 
 			fillList.add(start);
 
@@ -196,10 +200,14 @@ public class DrawCommand extends PlotterCommand {
 			}
 		}
 		
+		GApp.disposeVector(h);
+		
 		//ADD END POINT AS FILL STOPS EARLY.
 		fillList.add(bakedPoints.get(bakedPoints.size()-1).copy());
 		
 		//COPY FILL POINTS
+		
+
 		bakedPoints.clear();
 		for (int i = 0; i < fillList.size(); i++)
 			bakedPoints.add(fillList.get(i));
