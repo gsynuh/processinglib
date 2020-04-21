@@ -33,7 +33,7 @@ public class ForceField {
 	ArrayList<Force> forceList = new ArrayList<Force>();
 	public Force getClosestForce(PVector pos) {
 		
-		QuadTreeNode containingNode = quadTree.search(pos);
+		QuadTreeNode containingNode = quadTree.getNodeUnder(pos);
 		
 		forceList.clear();
 		for(Object obj : containingNode.data) {

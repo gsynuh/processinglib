@@ -8,10 +8,10 @@ import static processing.core.PApplet.*;
 public class QuadTreeNode {
 
 	public static int maxNodeDataNum = 4;
-
-	public int x;
-	public int y;
-
+	
+	public QuadTreeNode parentNode = null;
+	public Boolean visited = false;
+	
 	// A B
 	// C D
 
@@ -24,21 +24,21 @@ public class QuadTreeNode {
 	public Boolean isSplit = false;
 	public ArrayList<QuadTreeData> data = new ArrayList<QuadTreeData>();
 
-	public QuadTreeNode search(PVector pos) {
-		return search(this, pos);
+	public QuadTreeNode getNodeUnder(PVector pos) {
+		return getNodeUnder(this, pos);
 	}
 
-	public QuadTreeNode search(QuadTreeNode n, PVector pos) {
+	public QuadTreeNode getNodeUnder(QuadTreeNode n, PVector pos) {
 
 		if (n.isSplit) {
 			if (A.bounds.Contains(pos)) {
-				return A.search(A, pos);
+				return A.getNodeUnder(A, pos);
 			} else if (B.bounds.Contains(pos)) {
-				return B.search(B, pos);
+				return B.getNodeUnder(B, pos);
 			} else if (C.bounds.Contains(pos)) {
-				return C.search(C, pos);
+				return C.getNodeUnder(C, pos);
 			} else if (D.bounds.Contains(pos)) {
-				return D.search(D, pos);
+				return D.getNodeUnder(D, pos);
 			} else {
 				return n;
 			}
@@ -46,6 +46,62 @@ public class QuadTreeNode {
 		} else {
 			return n;
 		}
+	}
+	
+	
+	public QuadTreeData getClosestDataInSelf(PVector point) {
+		return getClosestDataInCandidates(point,this.data);
+	}
+	
+	static float sqrDist(PVector a, PVector b) {
+		return (a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y);
+	}
+	
+	public static QuadTreeData getClosestDataInCandidates(PVector point, ArrayList<QuadTreeData> list) {
+		QuadTreeData result = null;
+		float maxDist = Float.MAX_VALUE;
+		for(QuadTreeData d : list) {
+			float dist = sqrDist(d.position,point);
+			if(dist < maxDist) {
+				result = d;
+				maxDist = dist;
+			}
+		}
+		return result;
+	}
+	
+	static ArrayList<QuadTreeData> NNCandidates = new ArrayList<QuadTreeData>();
+	static ArrayList<QuadTreeNode> QNCandidates = new ArrayList<QuadTreeNode>();
+	
+	public QuadTreeData searchNN(PVector position) {
+		
+		NNCandidates.clear();
+		QNCandidates.clear();
+		
+		QuadTreeNode nodeUnder = this.getNodeUnder(position);
+		nodeUnder.visited = true;
+		
+		if(nodeUnder.isSplit) {
+			QNCandidates.add(nodeUnder.A);
+			QNCandidates.add(nodeUnder.B);
+			QNCandidates.add(nodeUnder.C);
+			QNCandidates.add(nodeUnder.D);
+		}else {
+			QNCandidates.add(nodeUnder);
+		}
+		
+		
+		//MARK VISITED AND COLLECT DATA CANDIDATES
+		for(QuadTreeNode q : QNCandidates) {
+			q.visited = true;
+			for(QuadTreeData d : q.data) {
+				NNCandidates.add(d);
+			}
+		}
+		
+		QuadTreeData result = getClosestDataInCandidates(position,NNCandidates);
+
+		return result;
 	}
 	
 	public void getAllData(ArrayList<QuadTreeData> output) {
@@ -112,6 +168,11 @@ public class QuadTreeNode {
 		B = new QuadTreeNode();
 		C = new QuadTreeNode();
 		D = new QuadTreeNode();
+		
+		A.parentNode = this;
+		B.parentNode = this;
+		C.parentNode = this;
+		D.parentNode = this;
 
 		int w = floor(this.bounds.size.x * 0.5f);
 		int h = floor(this.bounds.size.y * 0.5f);

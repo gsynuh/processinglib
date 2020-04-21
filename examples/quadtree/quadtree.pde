@@ -3,102 +3,100 @@ import gsynlib.geom.*;
 QuadTree quadTree;
 Bounds b;
 
+PVector mousePos = new PVector();
+
 void setup() {
-  size(800,800);
-  
-  QuadTreeNode.maxNodeDataNum = 4;
-  
-b = new Bounds(400,400,200,200);
-quadTree = new QuadTree(b);
+  size(800, 800);
+
+  QuadTreeNode.maxNodeDataNum = 3;
+
+  b = new Bounds(400, 400, 200, 200);
+  quadTree = new QuadTree(b);
 
 
-for(int i = 0; i < 1000; i++) {
-  PVector pos = new PVector(
-  random(width),
-  random(height)
-  );
+  for (int i = 0; i < 10; i++) {
+    PVector pos = new PVector(
+      random(width), 
+      random(height)
+      );
+    String str = "data" + floor(random(1) * 1000);
+    quadTree.insert(pos, str);
+  }
+}
+
+void mousePressed() {
+  mousePos.set(mouseX, mouseY);
   String str = "data" + floor(random(1) * 1000);
-  quadTree.insert(pos,str);
+  quadTree.insert(mousePos.copy(), str);
 }
 
+void drawBounds(Bounds b, Boolean doFill) {
 
-}
+  if (doFill)
+    fill(0,20);
+  else
+    noFill();
 
-void drawBounds(Bounds b) {
-rect(b.position.x,
-    b.position.y,
-    b.size.x,
+  rect(b.position.x, 
+    b.position.y, 
+    b.size.x, 
     b.size.y);
 }
 
 void drawQuadTreeNode(QuadTreeNode q) {
-  
-    noFill();
-    stroke(100);
-    strokeWeight(1);
-    
-    if(mouseNode == q) {
-      strokeWeight(3);
-    }
-    
-    drawBounds(q.bounds);
-  
-  if(q.isSplit) {
+
+  noFill();
+
+  stroke(100);
+  strokeWeight(1);
+
+  if (mouseNode == q) {
+    strokeWeight(3);
+  }
+
+  drawBounds(q.bounds, q.visited);
+
+  if (q.isSplit) {
     drawQuadTreeNode(q.A);
     drawQuadTreeNode(q.B);
     drawQuadTreeNode(q.C);
     drawQuadTreeNode(q.D);
-  }else {
-    
+  } else {
+
     stroke(32);
-    drawBounds(q.bounds);
     strokeWeight(4);
-    
-    for(QuadTreeData d : q.data) {
-      point(d.position.x,d.position.y);
+    for (QuadTreeData d : q.data) {
+      point(d.position.x, d.position.y);
     }
-    
   }
 }
+
 QuadTreeNode mouseNode = null;
-PVector mousePos = new PVector();
+QuadTreeData closestData = null;
 
 void draw() {
   background(255);
   noFill();
   
-  mousePos.set(mouseX,mouseY);
-  
-  if(frameCount % 60 == 0) {
-    String str = "data" + floor(random(1) * 1000);
-    quadTree.insert(mousePos.copy(),str);
-  }
-  
+  quadTree.resetVisited();
+
+  mousePos.set(mouseX, mouseY);
+
   QuadTreeNode r = quadTree.getRoot();
-  
-  mouseNode = quadTree.search(mousePos);
-  
-  float minDist = Float.MAX_VALUE;
-  QuadTreeData closest = null;
-  for(QuadTreeData d : mouseNode.data) {
-    float dist = PVector.dist(d.position,mousePos);
-    if(dist < minDist) {
-      minDist = dist;
-      closest = d;
-    }
-  }
-  
-   drawQuadTreeNode(r);
-  
-  if(closest != null) {
+
+  mouseNode = quadTree.getNodeUnder(mousePos);
+  closestData = quadTree.getNearestData(mousePos);
+
+  drawQuadTreeNode(r);
+
+  if (closestData != null) {
     noStroke();
-    fill(255,0,0);
-    ellipse(closest.position.x,closest.position.y,10,10);
+    fill(255, 0, 0);
+    ellipse(closestData.position.x, closestData.position.y, 10, 10);
   }
-  
+
   noFill();
-  stroke(255,0,255);
+  stroke(255, 0, 255);
   strokeWeight(3);
-  rect(b.position.x,b.position.y,b.size.x,b.size.y);
-  
+  rect(b.position.x, b.position.y, b.size.x, b.size.y);
 }

@@ -18,7 +18,21 @@ public class QuadTree {
 
 		root.bounds.copyFrom(initialBounds);
 		root.bounds.floorValues();
-		root.split();
+		
+	}
+	
+	public void resetVisited() {
+		resetVisited(root);
+	}
+	
+	void resetVisited(QuadTreeNode n) {
+		n.visited = false;
+		if(n.isSplit) {
+			resetVisited(n.A);
+			resetVisited(n.B);
+			resetVisited(n.C);
+			resetVisited(n.D);
+		}
 	}
 
 	public void insert(PVector position, Object data) {
@@ -28,9 +42,13 @@ public class QuadTree {
 
 		root.insert(position, data);
 	}
+	
+	public QuadTreeData getNearestData(PVector position) {
+		return root.searchNN(position);
+	}
 
-	public QuadTreeNode search(PVector position) {
-		return root.search(position);
+	public QuadTreeNode getNodeUnder(PVector position) {
+		return root.getNodeUnder(position);
 	}
 
 	public static ArrayList<QuadTreeData> dataPool = new ArrayList<QuadTreeData>();
@@ -55,39 +73,29 @@ public class QuadTree {
 
 		PVector newRootPosition = new PVector();
 
-		// A B
-		// C D
-
-		// 0 1
-		// 2 3
-
-		int placeofoldroot = 0;
-
+		//set new root position to include the old root bounds in a certain quadrant
 		
 		if (pos.x >= right && pos.y >= top) {
 			newRootPosition.x = 0;
 			newRootPosition.y = 0;
-			placeofoldroot = 0;
 		} else if (pos.x >= right && pos.y <= bottom) {
 			newRootPosition.x = 0;
 			newRootPosition.y = -h;
-			placeofoldroot = 2;
 		} else if (pos.x <= left && pos.y <= bottom ) {
 			newRootPosition.x = -w;
 			newRootPosition.y = -h;
-			placeofoldroot = 3;
 		}else {
 			newRootPosition.x = -w;
 			newRootPosition.y = 0;
-			placeofoldroot = 1;
 		}
+		
+		//set new root position
 
 		newRoot.bounds.position.set(
 				root.bounds.position.x + newRootPosition.x,
 				root.bounds.position.y + newRootPosition.y);
 
 		newRoot.bounds.size.set(w, h);
-		newRoot.split();
 		
 		//SAFE WAY TO MERGE WITH NEW ROOT, get all previous data and re-insert it.
 		
@@ -102,7 +110,6 @@ public class QuadTree {
 		root.data.clear();
 
 		root = newRoot;
-
 	}
 
 }
