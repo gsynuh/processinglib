@@ -35,7 +35,7 @@ public class BezierLoop extends GsynlibBase {
 	}
 	
 	public void setTargetBounds(Bounds b) {
-		targetBounds.copyFrom(b);
+		targetBounds.set(b);
 		targetBounds.dirty = true;
 	}
 	

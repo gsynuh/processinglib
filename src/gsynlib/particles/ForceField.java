@@ -2,9 +2,7 @@ package gsynlib.particles;
 
 import java.util.*;
 
-import gsynlib.geom.Bounds;
-import gsynlib.geom.QuadTree;
-import gsynlib.geom.QuadTreeNode;
+import gsynlib.geom.*;
 import processing.core.*;
 
 //TODO QUADTREE
@@ -19,13 +17,14 @@ public class ForceField {
 
 	public void addForce(PVector position, PVector force) {
 		Force f = new Force(position, force);
-		quadTree.insert(f.position, f);
-		forces.add(f);
+		QuadTreeData d = new QuadTreeData(f.position,f);
+		if(quadTree.insert(d))
+			forces.add(f);
 	}
 
 	public void clear() {
 		Bounds b = new Bounds();
-		b.copyFrom(quadTree.getRoot().bounds);
+		b.set(quadTree.getRoot().bounds);
 		quadTree = new QuadTree(b);
 		forces.clear();
 	}

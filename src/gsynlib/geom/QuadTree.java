@@ -3,11 +3,13 @@ package gsynlib.geom;
 import processing.core.*;
 import static processing.core.PApplet.*;
 
-import java.util.ArrayList;
+import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class QuadTree {
 
 	QuadTreeNode root;
+	ReentrantLock qtlock = new ReentrantLock();
 
 	public QuadTreeNode getRoot() {
 		return this.root;
@@ -16,18 +18,16 @@ public class QuadTree {
 	public QuadTree(Bounds initialBounds) {
 		root = new QuadTreeNode();
 
-		root.bounds.copyFrom(initialBounds);
-		root.bounds.floorValues();
-		
+		root.bounds.set(initialBounds);
 	}
-	
+
 	public void resetVisited() {
 		resetVisited(root);
 	}
-	
+
 	void resetVisited(QuadTreeNode n) {
 		n.visited = false;
-		if(n.isSplit) {
+		if (n.isSplit) {
 			resetVisited(n.A);
 			resetVisited(n.B);
 			resetVisited(n.C);
@@ -35,14 +35,57 @@ public class QuadTree {
 		}
 	}
 
-	public void insert(PVector position, Object data) {
-		if (!root.bounds.Contains(position, false)) {
-			expand(position);
+	public ArrayList<QuadTreeData> queryBounds(Bounds b) {
+		ArrayList<QuadTreeData> results = new ArrayList<QuadTreeData>();
+		queryBounds(b, results);
+		return results;
+	}
+
+	public void queryBounds(Bounds b, ArrayList<QuadTreeData> results) {
+		results.clear();
+		root.query(b, results);
+	}
+
+	public void updatePosition(QuadTreeData d, PVector newPosition) {
+		qtlock.lock();
+		try {
+			remove(d);
+			d.position.set(newPosition);
+			insert(d);
+		} finally {
+			qtlock.unlock();
+		}
+	}
+
+	public Boolean insert(QuadTreeData data) {
+		Boolean insertSuccess = false;
+		if (data == null)
+			return false;
+
+		qtlock.lock();
+		try {
+
+			while (!(insertSuccess = root.insert(data))) {
+				expand(data.position);
+			}
+
+		} finally {
+			qtlock.unlock();
 		}
 
-		root.insert(position, data);
+		return insertSuccess;
 	}
-	
+
+	public void remove(QuadTreeData d) {
+		qtlock.lock();
+		try {
+			QuadTreeNode dataNode = getNodeUnder(d.position);
+			dataNode.remove(d);
+		} finally {
+			qtlock.unlock();
+		}
+	}
+
 	public QuadTreeData getNearestData(PVector position) {
 		return root.searchNN(position);
 	}
@@ -60,54 +103,85 @@ public class QuadTree {
 			return;
 
 		// Create new root, and expand so that new position is included
-		float w = floor(root.bounds.size.x * 2f);
-		float h = floor(root.bounds.size.y * 2f);
+		float w = root.bounds.size.x;
+		float h = root.bounds.size.y;
 
 		QuadTreeNode newRoot = new QuadTreeNode();
-		
-		
-		float left = ceil(root.bounds.position.x);
-		float top = ceil(root.bounds.position.y);
-		float right = ceil(root.bounds.position.x + root.bounds.size.x);
-		float bottom = ceil(root.bounds.position.y + root.bounds.size.y);
+
+		float centerX = root.bounds.position.x + root.bounds.size.x * .5f;
+		float centerY = root.bounds.position.y + root.bounds.size.y * .5f;
 
 		PVector newRootPosition = new PVector();
 
-		//set new root position to include the old root bounds in a certain quadrant
-		
-		if (pos.x >= right && pos.y >= top) {
-			newRootPosition.x = 0;
-			newRootPosition.y = 0;
-		} else if (pos.x >= right && pos.y <= bottom) {
-			newRootPosition.x = 0;
-			newRootPosition.y = -h;
-		} else if (pos.x <= left && pos.y <= bottom ) {
-			newRootPosition.x = -w;
-			newRootPosition.y = -h;
-		}else {
-			newRootPosition.x = -w;
-			newRootPosition.y = 0;
-		}
-		
-		//set new root position
+		// set new root position to include the old root bounds in a certain quadrant
 
-		newRoot.bounds.position.set(
-				root.bounds.position.x + newRootPosition.x,
+		// NW - N
+		// NE - N
+
+		QuadTreeNode.DIRECTION oldRootPosition = QuadTreeNode.DIRECTION.UNKNOWN;
+
+		if (pos.y < centerY) {
+			if (pos.x > centerX) {
+				newRootPosition.x = 0;
+				newRootPosition.y = -h;
+				oldRootPosition = QuadTreeNode.DIRECTION.SW;
+			} else {
+				newRootPosition.x = -w;
+				newRootPosition.y = -h;
+				oldRootPosition = QuadTreeNode.DIRECTION.SE;
+			}
+		}
+
+		// SW - S
+		// SE - S
+
+		if (pos.y > centerY) {
+			if (pos.x < centerX) {
+				newRootPosition.x = 0;
+				newRootPosition.y = 0;
+				oldRootPosition = QuadTreeNode.DIRECTION.NW;
+			} else {
+				newRootPosition.x = -w;
+				newRootPosition.y = 0;
+				oldRootPosition = QuadTreeNode.DIRECTION.NE;
+			}
+		}
+
+		// set new root position
+
+		newRoot.bounds.position.set(root.bounds.position.x + newRootPosition.x,
 				root.bounds.position.y + newRootPosition.y);
 
-		newRoot.bounds.size.set(w, h);
-		
-		//SAFE WAY TO MERGE WITH NEW ROOT, get all previous data and re-insert it.
-		
-		QuadTree.dataPool.clear();
-		root.getAllData(QuadTree.dataPool);
-		
-		for (QuadTreeData d : QuadTree.dataPool) {
-			newRoot.insert(d.position, d);
+		newRoot.bounds.size.set(w * 2f, h * 2f);
+
+		newRoot.split();
+
+		switch (oldRootPosition) {
+		case SW:
+			newRoot.C = root;
+			break;
+		case NW:
+			newRoot.A = root;
+			break;
+		case NE:
+			newRoot.B = root;
+			break;
+		case SE:
+			newRoot.D = root;
+			break;
 		}
 
-		QuadTree.dataPool.clear();
-		root.data.clear();
+		/*
+		 * // SAFE WAY TO MERGE WITH NEW ROOT, get all previous data and re-insert it.
+		 * 
+		 * ArrayList<QuadTreeData> prevData = new ArrayList<QuadTreeData>();
+		 * 
+		 * root.getAllData(prevData);
+		 * 
+		 * for (QuadTreeData d : prevData) { if (d != null) newRoot.insert(d); }
+		 * 
+		 * root.data.clear();
+		 */
 
 		root = newRoot;
 	}

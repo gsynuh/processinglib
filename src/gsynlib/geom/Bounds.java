@@ -38,22 +38,8 @@ public class Bounds extends GsynlibBase {
 		size.x = _w;
 		size.y = _h;
 	}
-
-	public void floorValues() {
-		position.x = floor(position.x);
-		position.y = floor(position.y);
-		size.x = floor(size.x);
-		size.y = floor(size.y);
-	}
-
-	public void roundValues() {
-		position.x = round(position.x);
-		position.y = round(position.y);
-		size.x = round(size.x);
-		size.y = round(size.y);
-	}
-
-	public void copyFrom(Bounds b) {
+	
+	public void set(Bounds b) {
 		this.position.set(b.position);
 		this.size.set(b.size);
 	}
@@ -98,9 +84,24 @@ public class Bounds extends GsynlibBase {
 	static PVector horizontal = new PVector();
 	static PVector vertical = new PVector();
 
-	public void set(Bounds b) {
-		this.position.set(b.position);
-		this.size.set(b.size);
+	public Boolean Intersects(Bounds b) {
+		
+		float leftA = this.position.x;
+		float rightA = this.position.x + this.size.x;
+		float topA = this.position.y;
+		float bottomA = this.position.y + this.size.y;
+		
+		float leftB = b.position.x;
+		float rightB = b.position.x + b.size.x;
+		float topB = b.position.y;
+		float bottomB = b.position.y + b.size.y;
+		
+		return !(
+					leftB > rightA 
+				|| rightB < leftA 
+				|| topB > bottomA 
+				|| bottomB < topA
+				);
 	}
 
 	public Boolean Contains(PVector p) {
@@ -109,17 +110,6 @@ public class Bounds extends GsynlibBase {
 		Boolean cv = p.y >= position.y && p.y <= position.y + size.y;
 
 		return ch && cv;
-	}
-
-	public Boolean Contains(PVector p, Boolean excludeBorders) {
-		if (!excludeBorders) {
-			return Contains(p);
-		} else {
-			Boolean ch = p.x > position.x && p.x < position.x + size.x;
-			Boolean cv = p.y > position.y && p.y < position.y + size.y;
-
-			return ch && cv;
-		}
 	}
 
 	public void Encapsulate(Bounds b) {

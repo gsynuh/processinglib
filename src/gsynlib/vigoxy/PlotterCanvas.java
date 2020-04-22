@@ -71,11 +71,11 @@ public class PlotterCanvas extends GsynlibBase {
 	}
 
 	public void setCanvasBounds(Bounds b) {
-		bounds.copyFrom(b);
+		bounds.set(b);
 	}
 
 	public void setDrawBounds(Bounds b) {
-		drawBounds.copyFrom(b);
+		drawBounds.set(b);
 	}
 
 	public void prepare() {
