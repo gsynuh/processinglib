@@ -6,6 +6,8 @@ import static processing.core.PApplet.*;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+import gsynlib.utils.*;
+
 public class QuadTree {
 
 	QuadTreeNode root;
@@ -34,6 +36,37 @@ public class QuadTree {
 			resetVisited(n.D);
 		}
 	}
+	
+	public ArrayList<QuadTreeData> queryCircle(PVector position, float radius) {
+		ArrayList<QuadTreeData> results = new ArrayList<QuadTreeData>();
+		queryCircle(position, radius, results);
+		return results;
+	}
+	
+	ArrayList<QuadTreeData> circleDataQueryResults = new ArrayList<QuadTreeData>();
+	public void queryCircle(PVector position, float radius, ArrayList<QuadTreeData> output) {
+		output.clear();
+		circleDataQueryResults.clear();
+		
+		Bounds b = new Bounds();
+		b.position.set(position);
+		b.size.set(radius*2f,radius*2f);
+		
+		b.position.x -= b.size.x*0.5f;
+		b.position.y -= b.size.y*0.5f;
+		
+		root.query(b, circleDataQueryResults);
+		
+		float sqrRadius = radius * radius;
+		
+		for (QuadTreeData d : circleDataQueryResults) {
+			if (GApp.sqrDist(d.position, position) <= sqrRadius) {
+				output.add(d);
+			}
+		}
+		
+		circleDataQueryResults.clear();
+	}
 
 	public ArrayList<QuadTreeData> queryBounds(Bounds b) {
 		ArrayList<QuadTreeData> results = new ArrayList<QuadTreeData>();
@@ -41,9 +74,9 @@ public class QuadTree {
 		return results;
 	}
 
-	public void queryBounds(Bounds b, ArrayList<QuadTreeData> results) {
-		results.clear();
-		root.query(b, results);
+	public void queryBounds(Bounds b, ArrayList<QuadTreeData> output) {
+		output.clear();
+		root.query(b, output);
 	}
 
 	public void updatePosition(QuadTreeData d, PVector newPosition) {
@@ -85,7 +118,7 @@ public class QuadTree {
 			qtlock.unlock();
 		}
 	}
-
+	
 	public QuadTreeData getNearestData(PVector position) {
 		return root.searchNN(position);
 	}
@@ -93,8 +126,6 @@ public class QuadTree {
 	public QuadTreeNode getNodeUnder(PVector position) {
 		return root.getNodeUnder(position);
 	}
-
-	public static ArrayList<QuadTreeData> dataPool = new ArrayList<QuadTreeData>();
 
 	// Expand to encapsulate given position, make root a subdivision of the new node
 	void expand(PVector pos) {
@@ -183,6 +214,7 @@ public class QuadTree {
 		 * root.data.clear();
 		 */
 
+		root.parentNode = newRoot;
 		root = newRoot;
 	}
 

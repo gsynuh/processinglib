@@ -2,6 +2,7 @@ package gsynlib.geom;
 
 import java.util.*;
 
+import gsynlib.utils.*;
 import processing.core.*;
 import static processing.core.PApplet.*;
 
@@ -28,6 +29,7 @@ public class QuadTreeNode {
 
 	public Boolean isSplit = false;
 	public ArrayList<QuadTreeData> data = new ArrayList<QuadTreeData>();
+	public int totalDataCount = 0;
 
 	public QuadTreeNode getNodeUnder(PVector pos) {
 		return getNodeUnder(this, pos);
@@ -56,16 +58,12 @@ public class QuadTreeNode {
 	public QuadTreeData getClosestDataInSelf(PVector point) {
 		return getClosestDataInCandidates(point, this.data);
 	}
-
-	static float sqrDist(PVector a, PVector b) {
-		return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
-	}
-
+	
 	public static QuadTreeData getClosestDataInCandidates(PVector point, ArrayList<QuadTreeData> list) {
 		QuadTreeData result = null;
 		float maxDist = Float.MAX_VALUE;
 		for (QuadTreeData d : list) {
-			float dist = sqrDist(d.position, point);
+			float dist = GApp.sqrDist(d.position, point);
 			if (dist < maxDist) {
 				result = d;
 				maxDist = dist;
@@ -153,9 +151,7 @@ public class QuadTreeNode {
 			}
 		}
 	}
-
-	// implement nearest neighbor search
-
+	
 	// RECT QUERY
 	public void query(Bounds b, ArrayList<QuadTreeData> results) {
 		query(this, b, results);
@@ -183,9 +179,6 @@ public class QuadTreeNode {
 			}
 		}
 	}
-
-	// CIRCLE QUERY
-	// ConcurrentModificationException
 
 	public Boolean insert(QuadTreeData d) {
 
@@ -234,7 +227,8 @@ public class QuadTreeNode {
 	}
 
 	ArrayList<QuadTreeData> collect = new ArrayList<QuadTreeData>();
-
+	ArrayList<QuadTreeData> splitData = new ArrayList();
+	
 	public void collapse() {
 		if (this.parentNode == null) // ROOT
 			return;
@@ -253,7 +247,8 @@ public class QuadTreeNode {
 			this.parentNode.data.addAll(collect);
 			this.parentNode.collapse();
 		}
-
+		
+		collect.clear();
 	}
 
 	public void split() {
@@ -287,13 +282,13 @@ public class QuadTreeNode {
 
 		isSplit = true;
 
-		ArrayList<QuadTreeData> splitData = new ArrayList();
+		splitData.clear();
 		splitData.addAll(this.data);
 		this.data.clear();
 
 		for (QuadTreeData d : splitData) {
 			this.insert(d);
 		}
-
+		splitData.clear();	
 	}
 }

@@ -30,6 +30,12 @@ public class GApp {
 		return str == null || (str != null && str.isEmpty());
 	}
 	
+	public static float sqrDist(PVector a, PVector b) {
+		float dx = a.x - b.x;
+		float dy = a.y - b.y;
+		return dx*dx + dy*dy;
+	}
+	
 	public static Boolean vectorPoolInitialized = false;
 	static int livePVCount = 0;
 	static ArrayList<PVector> vectorPool = new ArrayList<PVector>();

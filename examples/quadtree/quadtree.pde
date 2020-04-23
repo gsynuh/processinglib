@@ -1,9 +1,11 @@
 import gsynlib.geom.*;
+import gsynlib.utils.*;
 
 QuadTree quadTree;
 
 Bounds b;
-Bounds queryBounds;
+float queryRadius = 50;
+
 QuadTreeData mouseData;
 PVector mousePoint = new PVector();
 QuadTreeNode mouseNode = null;
@@ -15,25 +17,85 @@ void setup() {
 
   QuadTreeNode.maxNodeDataNum = 2;
 
-  queryBounds = new Bounds(0, 0, 200, 100);
-
-  b = new Bounds(400, 400, 125, 125);
+  b = new Bounds(325.3, 315.3, 125, 125);
   quadTree = new QuadTree(b);
 
   mouseData = new QuadTreeData(new PVector(100, 100), "mouseData");
   quadTree.insert(mouseData);
 
-  for (int i = 0; i < 1000; i++) {
-    PVector pos = new PVector(
-      random(width), 
-      random(height)
-      );
-    String str = "data" + floor(random(1) * 1000);
-    QuadTreeData d = new QuadTreeData(pos, str);
-    quadTree.insert(d);
-  }
+  /*
+  for (int i = 0; i < 10; i++) {
+   PVector pos = new PVector(
+   random(width), 
+   random(height)
+   );
+   String str = "data" + floor(random(1) * 1000);
+   QuadTreeData d = new QuadTreeData(pos, str);
+   quadTree.insert(d);
+   }
+   */
 }
 
+void mousePressed() {
+  PVector pos = new PVector(mouseX, mouseY);
+
+  QuadTreeData d = new QuadTreeData(pos, "mousePressed" + pos.toString());
+  quadTree.insert(d);
+}
+
+float time = 0f;
+
+void draw() {
+  background(255);
+  noFill();
+
+  time += 0.04f;
+
+  mousePoint.set(mouseX, mouseY);
+
+  quadTree.resetVisited();
+
+  float rad = (cos(time) * 0.5f + 0.5f) * queryRadius + queryRadius;
+  quadTree.queryCircle(mousePoint, rad, queryResults);
+
+  //constantly remove and re-insert mouseData , changing its position
+  quadTree.updatePosition(mouseData, mousePoint);
+
+  stroke(0, 255, 255);
+  fill(0, 255, 255, 100);
+  ellipse(
+    mousePoint.x, 
+    mousePoint.y, 
+    rad * 2f, 
+    rad * 2f
+    );
+  strokeWeight(12);
+
+  for (QuadTreeData d : queryResults) {
+    point(d.position.x, d.position.y);
+  }
+
+  QuadTreeNode r = quadTree.getRoot();
+
+  mouseNode = quadTree.getNodeUnder(mousePoint);
+
+  closestData = QuadTreeNode.getClosestDataInCandidates(mousePoint, queryResults);
+
+  drawQuadTreeNode(r);
+
+  if (closestData != null) {
+    noStroke();
+    fill(255, 0, 0);
+    ellipse(closestData.position.x, closestData.position.y, 10, 10);
+  }
+
+  noFill();
+  stroke(255, 0, 255);
+  strokeWeight(3);
+  rect(b.position.x, b.position.y, b.size.x, b.size.y);
+}
+
+// DRAW
 
 void drawBounds(Bounds b, Boolean doFill) {
 
@@ -72,53 +134,4 @@ void drawQuadTreeNode(QuadTreeNode q) {
       point(d.position.x, d.position.y);
     }
   }
-}
-
-void draw() {
-  background(255);
-  noFill();
-
-  mousePoint.set(mouseX, mouseY);
-
-  quadTree.resetVisited();
-
-  queryBounds.position.x = mousePoint.x - queryBounds.size.x * 0.5;
-  queryBounds.position.y = mousePoint.y - queryBounds.size.y * 0.5;
-  quadTree.queryBounds(queryBounds, queryResults);
-
-  //constantly remove and re-insert mouseData , changing its position
-  quadTree.updatePosition(mouseData, mousePoint);
-
-  stroke(0, 255, 255);
-  fill(0, 255, 255, 100);
-  rect(
-    queryBounds.position.x, 
-    queryBounds.position.y, 
-    queryBounds.size.x, 
-    queryBounds.size.y
-    );
-  strokeWeight(12);
-
-  for (QuadTreeData d : queryResults) {
-    point(d.position.x, d.position.y);
-  }
-
-  QuadTreeNode r = quadTree.getRoot();
-
-  mouseNode = quadTree.getNodeUnder(mousePoint);
-
-  closestData = QuadTreeNode.getClosestDataInCandidates(mousePoint, queryResults);
-
-  drawQuadTreeNode(r);
-
-  if (closestData != null) {
-    noStroke();
-    fill(255, 0, 0);
-    ellipse(closestData.position.x, closestData.position.y, 10, 10);
-  }
-
-  noFill();
-  stroke(255, 0, 255);
-  strokeWeight(3);
-  rect(b.position.x, b.position.y, b.size.x, b.size.y);
 }
