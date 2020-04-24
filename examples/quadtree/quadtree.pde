@@ -8,8 +8,6 @@ float queryRadius = 50;
 
 QuadTreeData mouseData;
 PVector mousePoint = new PVector();
-QuadTreeNode mouseNode = null;
-QuadTreeData closestData = null;
 ArrayList<QuadTreeData> queryResults = new ArrayList<QuadTreeData>();
 
 void setup() {
@@ -20,11 +18,11 @@ void setup() {
   b = new Bounds(325.3, 315.3, 125, 125);
   quadTree = new QuadTree(b);
 
-  mouseData = new QuadTreeData(new PVector(100, 100), "mouseData");
-  quadTree.insert(mouseData);
+  //mouseData = new QuadTreeData(new PVector(100, 100), "mouseData");
+  //quadTree.insert(mouseData);
 
   /*
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 500; i++) {
    PVector pos = new PVector(
    random(width), 
    random(height)
@@ -32,8 +30,7 @@ void setup() {
    String str = "data" + floor(random(1) * 1000);
    QuadTreeData d = new QuadTreeData(pos, str);
    quadTree.insert(d);
-   }
-   */
+   }*/
 }
 
 void mousePressed() {
@@ -59,7 +56,11 @@ void draw() {
   quadTree.queryCircle(mousePoint, rad, queryResults);
 
   //constantly remove and re-insert mouseData , changing its position
-  quadTree.updatePosition(mouseData, mousePoint);
+  //quadTree.updatePosition(mouseData, mousePoint);
+
+  QuadTreeNode rootNode = quadTree.getRoot();
+
+  QuadTreeData closestData = quadTree.getNearestData(mousePoint);
 
   stroke(0, 255, 255);
   fill(0, 255, 255, 100);
@@ -75,13 +76,7 @@ void draw() {
     point(d.position.x, d.position.y);
   }
 
-  QuadTreeNode r = quadTree.getRoot();
-
-  mouseNode = quadTree.getNodeUnder(mousePoint);
-
-  closestData = QuadTreeNode.getClosestDataInCandidates(mousePoint, queryResults);
-
-  drawQuadTreeNode(r);
+  drawQuadTreeNode(rootNode);
 
   if (closestData != null) {
     noStroke();
@@ -97,11 +92,18 @@ void draw() {
 
 // DRAW
 
-void drawBounds(Bounds b, Boolean doFill) {
+void drawBounds(Bounds b, int i) {
 
-  if (doFill)
-    fill(0, 10);
-  else
+  if (i >0) {
+    switch(i) {
+    case 1 : 
+      fill(255, 0, 0, 30); 
+      break;
+    case 2 : 
+      fill(0, 0, 255, 30); 
+      break;
+    }
+  } else
     noFill();
 
   rect(b.position.x, 
@@ -115,13 +117,9 @@ void drawQuadTreeNode(QuadTreeNode q) {
   stroke(100);
   strokeWeight(1);
 
-  if (mouseNode == q) {
-    strokeWeight(3);
-  }
+  drawBounds(q.bounds, q.id);
 
-  drawBounds(q.bounds, q.visited);
-
-  if (q.isSplit) {
+  if (!q.isLeaf()) {
     drawQuadTreeNode(q.A);
     drawQuadTreeNode(q.B);
     drawQuadTreeNode(q.C);

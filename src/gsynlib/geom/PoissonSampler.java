@@ -28,8 +28,7 @@ public class PoissonSampler extends GsynlibBase {
 	}
 
 	public void init(float _gridSize, float _x, float _y, float _w, float _h) {
-		bounds.position.set(_x, _y);
-		bounds.size.set(_w, _h);
+		bounds.set(_x, _y,_w,_h);
 		this.gridSize = _gridSize;
 		build();
 	}

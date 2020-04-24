@@ -470,7 +470,7 @@ public class PlotterCanvas extends GsynlibBase {
 		}
 
 		PVector p1 = this.bounds.position.copy();
-		PVector p3 = this.bounds.getBottomRight();
+		PVector p3 = this.bounds.bottomRight.copy();
 		PVector p2 = new PVector(p1.x + p3.x, p1.y);
 		PVector p4 = new PVector(p1.x, p1.y + p3.y);
 
@@ -597,15 +597,13 @@ public class PlotterCanvas extends GsynlibBase {
 
 		screenScale = 1f / s;
 
-		PVector drawBoundsC = drawBounds.getCenter();
-
 		app().fill(backgroundColor);
 		app().rect(drawBounds.position.x, drawBounds.position.y, drawBounds.size.x, drawBounds.size.y);
 
 		app().pushStyle();
 		app().pushMatrix();
 
-		app().translate(drawBoundsC.x, drawBoundsC.y);
+		app().translate(drawBounds.center.x, drawBounds.center.y);
 		app().scale(s, s);
 		app().translate(-bounds.size.x / 2, -bounds.size.y / 2);
 

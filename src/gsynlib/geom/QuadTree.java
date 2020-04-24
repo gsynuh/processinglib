@@ -28,43 +28,43 @@ public class QuadTree {
 	}
 
 	void resetVisited(QuadTreeNode n) {
-		n.visited = false;
-		if (n.isSplit) {
+		n.id = 0;
+		if (!n.isLeaf()) {
 			resetVisited(n.A);
 			resetVisited(n.B);
 			resetVisited(n.C);
 			resetVisited(n.D);
 		}
 	}
-	
+
 	public ArrayList<QuadTreeData> queryCircle(PVector position, float radius) {
 		ArrayList<QuadTreeData> results = new ArrayList<QuadTreeData>();
 		queryCircle(position, radius, results);
 		return results;
 	}
-	
+
 	ArrayList<QuadTreeData> circleDataQueryResults = new ArrayList<QuadTreeData>();
+
 	public void queryCircle(PVector position, float radius, ArrayList<QuadTreeData> output) {
 		output.clear();
 		circleDataQueryResults.clear();
-		
-		Bounds b = new Bounds();
-		b.position.set(position);
-		b.size.set(radius*2f,radius*2f);
-		
-		b.position.x -= b.size.x*0.5f;
-		b.position.y -= b.size.y*0.5f;
-		
+
+		Bounds b = new Bounds(
+				position.x - radius,
+				position.y - radius,
+				radius * 2f,
+				radius *2f);
+
 		root.query(b, circleDataQueryResults);
-		
+
 		float sqrRadius = radius * radius;
-		
+
 		for (QuadTreeData d : circleDataQueryResults) {
 			if (GApp.sqrDist(d.position, position) <= sqrRadius) {
 				output.add(d);
 			}
 		}
-		
+
 		circleDataQueryResults.clear();
 	}
 
@@ -118,7 +118,7 @@ public class QuadTree {
 			qtlock.unlock();
 		}
 	}
-	
+
 	public QuadTreeData getNearestData(PVector position) {
 		return root.searchNN(position);
 	}
@@ -139,8 +139,8 @@ public class QuadTree {
 
 		QuadTreeNode newRoot = new QuadTreeNode();
 
-		float centerX = root.bounds.position.x + root.bounds.size.x * .5f;
-		float centerY = root.bounds.position.y + root.bounds.size.y * .5f;
+		float centerX = root.bounds.center.x;
+		float centerY = root.bounds.center.y;
 
 		PVector newRootPosition = new PVector();
 
@@ -180,13 +180,12 @@ public class QuadTree {
 
 		// set new root position
 
-		newRoot.bounds.position.set(root.bounds.position.x + newRootPosition.x,
-				root.bounds.position.y + newRootPosition.y);
-
-		newRoot.bounds.size.set(w * 2f, h * 2f);
+		newRoot.bounds.set(root.bounds.position.x + newRootPosition.x,
+				root.bounds.position.y + newRootPosition.y,w * 2f, h * 2f );
 
 		newRoot.split();
 
+		// assign old root to a side of new root
 		switch (oldRootPosition) {
 		case SW:
 			newRoot.C = root;
@@ -202,20 +201,22 @@ public class QuadTree {
 			break;
 		}
 
-		/*
-		 * // SAFE WAY TO MERGE WITH NEW ROOT, get all previous data and re-insert it.
-		 * 
-		 * ArrayList<QuadTreeData> prevData = new ArrayList<QuadTreeData>();
-		 * 
-		 * root.getAllData(prevData);
-		 * 
-		 * for (QuadTreeData d : prevData) { if (d != null) newRoot.insert(d); }
-		 * 
-		 * root.data.clear();
-		 */
+		resolveParentNodes(newRoot, null);
 
-		root.parentNode = newRoot;
 		root = newRoot;
+	}
+
+	void resolveParentNodes(QuadTreeNode n, QuadTreeNode parent) {
+
+		n.parentNode = parent;
+
+		if (!n.isLeaf()) {
+			resolveParentNodes(n.A, n);
+			resolveParentNodes(n.B, n);
+			resolveParentNodes(n.C, n);
+			resolveParentNodes(n.D, n);
+		}
+
 	}
 
 }

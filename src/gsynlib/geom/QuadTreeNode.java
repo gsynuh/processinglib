@@ -10,12 +10,12 @@ public class QuadTreeNode {
 
 	public static int maxNodeDataNum = 4;
 
-	public DIRECTION direction = DIRECTION.UNKNOWN;
 	public QuadTreeNode parentNode = null;
-	public Boolean visited = false;
-
+	
+	public int id = 0;
+	
 	public static enum DIRECTION {
-		UNKNOWN, N, NE, E, SE, S, SW, NW
+		UNKNOWN, N, NE, E, SE, S, SW, W, NW
 	}
 
 	// A B
@@ -26,8 +26,11 @@ public class QuadTreeNode {
 	public QuadTreeNode C;
 	public QuadTreeNode D;
 	public Bounds bounds = new Bounds();
+	
+	public Boolean isLeaf() {
+		return (A == null || B == null || C == null || D == null);
+	}
 
-	public Boolean isSplit = false;
 	public ArrayList<QuadTreeData> data = new ArrayList<QuadTreeData>();
 	public int totalDataCount = 0;
 
@@ -37,7 +40,7 @@ public class QuadTreeNode {
 
 	public QuadTreeNode getNodeUnder(QuadTreeNode n, PVector pos) {
 
-		if (n.isSplit) {
+		if (!n.isLeaf()) {
 			if (A.bounds.Contains(pos)) {
 				return A.getNodeUnder(A, pos);
 			} else if (B.bounds.Contains(pos)) {
@@ -76,29 +79,93 @@ public class QuadTreeNode {
 	static ArrayList<QuadTreeNode> QNCandidates = new ArrayList<QuadTreeNode>();
 
 	static void getNodeNeighbors(QuadTreeNode n, ArrayList<QuadTreeNode> output) {
+		output.clear();
 		getNeighborsInDirection(n, DIRECTION.N, output);
+		getNeighborsInDirection(n, DIRECTION.NE, output);
+		getNeighborsInDirection(n, DIRECTION.E, output);
+		getNeighborsInDirection(n, DIRECTION.SE, output);
+		getNeighborsInDirection(n, DIRECTION.SW, output);
+		getNeighborsInDirection(n, DIRECTION.W, output);
 	}
-
+	
 	static void getNeighborsInDirection(QuadTreeNode n, DIRECTION dir, ArrayList<QuadTreeNode> output) {
-		if (n.parentNode == null)
-			return; // ROOT
+		QuadTreeNode neighbor = getNofGreaterOrEqualSize(n,dir);
+		getNofSmallerSizes(n,neighbor,dir,output);
+	}
+	
+	public DIRECTION getDirection() {
+		if(this.parentNode == null)
+			return DIRECTION.UNKNOWN;
+		
+		if(this == this.parentNode.A)
+			return DIRECTION.NW;
+		if(this == this.parentNode.B)
+			return DIRECTION.NE;
+		if(this == this.parentNode.C)
+			return DIRECTION.SW;
+		if(this == this.parentNode.D)
+			return DIRECTION.SE;
+		
+		return DIRECTION.UNKNOWN;
+	}
+	
+	static QuadTreeNode getNofGreaterOrEqualSize(QuadTreeNode n, DIRECTION dir) {
+		if(n == null)
+			return n;
+		
+		if(dir == DIRECTION.N) {
+			
+			if(n.parentNode == null)
+				return null;
+			
+			n.id = 1;
 
-		if (!n.parentNode.isSplit) {
-			return; // SOMETHING WRONG, OUR PARENT SHOULD BE SPLIT.
+			if(n.getDirection() == DIRECTION.SW)
+				return n.parentNode.A; //NW
+			
+			if(n.getDirection() == DIRECTION.SE)
+				return n.parentNode.B; //NE
+			
+			QuadTreeNode node = getNofGreaterOrEqualSize(n.parentNode,dir);
+			if(node == null || node.isLeaf())
+				return node;
+			
+			//SHOULD BE NORTH
+			if(n.getDirection() == DIRECTION.NW)
+				return node.C;
+			else // NE
+				return node.D;
 		}
-
-		if (n != n.parentNode.A)
-			output.add(n.parentNode.A);
-		if (n != n.parentNode.B)
-			output.add(n.parentNode.B);
-		if (n != n.parentNode.C)
-			output.add(n.parentNode.C);
-		if (n != n.parentNode.D)
-			output.add(n.parentNode.D);
+		
+		return null;
 	}
 
-	public void searchKNN(PVector pos, int maxResults, ArrayList<QuadTreeData> output) {
+	static ArrayList<QuadTreeNode> candidates = new ArrayList<QuadTreeNode>();
+	static void getNofSmallerSizes(QuadTreeNode n,QuadTreeNode neighbor, DIRECTION dir, ArrayList<QuadTreeNode> output) {
+		if(n == null)
+			return;
+		
+		candidates.clear();
 
+		if(neighbor != null)
+			candidates.add(neighbor);
+		
+		if(dir == DIRECTION.N) {
+			while(candidates.size() > 0) {
+				QuadTreeNode c = candidates.get(0);
+				if(c.isLeaf()) {
+					c.id = 2;
+					output.add(c);
+				}else {
+					candidates.add(c.C);
+					candidates.add(c.D);
+				}
+				
+				candidates.remove(0);
+			}
+			
+		}
+		
 	}
 
 	public QuadTreeData searchNN(PVector position) {
@@ -107,22 +174,11 @@ public class QuadTreeNode {
 		QNCandidates.clear();
 
 		QuadTreeNode nodeUnder = this.getNodeUnder(position);
-		nodeUnder.visited = true;
-
-		if (nodeUnder.isSplit) {
-			QNCandidates.add(nodeUnder.A);
-			QNCandidates.add(nodeUnder.B);
-			QNCandidates.add(nodeUnder.C);
-			QNCandidates.add(nodeUnder.D);
-		} else {
-			QNCandidates.add(nodeUnder);
-		}
 
 		getNodeNeighbors(nodeUnder, QNCandidates);
 
 		// MARK VISITED AND COLLECT DATA CANDIDATES
 		for (QuadTreeNode q : QNCandidates) {
-			q.visited = true;
 			for (QuadTreeData d : q.data) {
 				if (!NNCandidates.contains(d))
 					NNCandidates.add(d);
@@ -139,7 +195,7 @@ public class QuadTreeNode {
 	}
 
 	void getAllData(QuadTreeNode n, ArrayList<QuadTreeData> output) {
-		if (n.isSplit) {
+		if (!n.isLeaf()) {
 			getAllData(n.A, output);
 			getAllData(n.B, output);
 			getAllData(n.C, output);
@@ -163,9 +219,7 @@ public class QuadTreeNode {
 			return;
 		}
 
-		n.visited = true;
-
-		if (n.isSplit) {
+		if (!n.isLeaf()) {
 			query(n.A, b, results);
 			query(n.B, b, results);
 			query(n.C, b, results);
@@ -185,7 +239,7 @@ public class QuadTreeNode {
 		if (!this.bounds.Contains(d.position))
 			return false;
 
-		if (isSplit) {
+		if (!isLeaf()) {
 
 			if (A.insert(d)) {
 			} else if (B.insert(d)) {
@@ -243,7 +297,6 @@ public class QuadTreeNode {
 			this.parentNode.B = null;
 			this.parentNode.C = null;
 			this.parentNode.D = null;
-			this.parentNode.isSplit = false;
 			this.parentNode.data.addAll(collect);
 			this.parentNode.collapse();
 		}
@@ -260,11 +313,6 @@ public class QuadTreeNode {
 		C = new QuadTreeNode();
 		D = new QuadTreeNode();
 
-		A.direction = DIRECTION.NW;
-		B.direction = DIRECTION.NE;
-		C.direction = DIRECTION.SW;
-		D.direction = DIRECTION.SE;
-
 		A.parentNode = this;
 		B.parentNode = this;
 		C.parentNode = this;
@@ -279,8 +327,6 @@ public class QuadTreeNode {
 		D.bounds = new Bounds(this.bounds.position.x + w, this.bounds.position.y + h, w, h);
 
 		// FILL SUBDIVISION WITH DATA
-
-		isSplit = true;
 
 		splitData.clear();
 		splitData.addAll(this.data);

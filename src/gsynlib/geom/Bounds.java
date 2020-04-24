@@ -11,12 +11,23 @@ public class Bounds extends GsynlibBase {
 
 	public PVector position = new PVector();
 	public PVector size = new PVector();
+		
+	public PVector center = new PVector();
+	public PVector bottomRight = new PVector();
 
 	public Boolean dirty = true;
 
 	public Bounds() {
 		position.x = position.y = -100;
 		size.x = size.y = 200;
+		update();
+	}
+	
+	public void update() {
+		center.x = position.x + size.x*0.5f;
+		center.y = position.y + size.y*0.5f;
+		bottomRight.x = position.x + size.x;
+		bottomRight.y = position.y + size.y;
 	}
 
 	public Bounds(PVector p) {
@@ -25,23 +36,41 @@ public class Bounds extends GsynlibBase {
 		position.x -= m;
 		position.y -= m;
 		size.set(m * 2, m * 2);
+		update();
 	}
 
 	public Bounds(PVector _pos, PVector _size) {
 		position.set(_pos);
 		size.set(_size);
+		update();
 	}
 
 	public Bounds(float _x, float _y, float _w, float _h) {
-		position.x = _x;
-		position.y = _y;
-		size.x = _w;
-		size.y = _h;
+		this.set(_x,_y,_w,_h);
+	}
+	
+	public void setPosition(float x, float y) {
+		this.position.set(x,y);
+		this.update();
+	}
+	
+	public void setSize(float w, float h) {
+		this.size.set(w,h);
+		this.update();
 	}
 	
 	public void set(Bounds b) {
 		this.position.set(b.position);
 		this.size.set(b.size);
+		update();
+	}
+	
+	public void set(float _x, float _y, float _w, float _h) {
+		position.x = _x;
+		position.y = _y;
+		size.x = _w;
+		size.y = _h;
+		update();
 	}
 
 	public PVector getRandom() {
@@ -53,17 +82,6 @@ public class Bounds extends GsynlibBase {
 		y = constrain(y, 0f, 1f);
 
 		return new PVector(this.position.x + x * this.size.x, this.position.y + y * this.size.y);
-	}
-
-	public PVector getCenter() {
-		PVector p = new PVector();
-		p.x = position.x + size.x * 0.5f;
-		p.y = position.y + size.y * 0.5f;
-		return p;
-	}
-
-	public PVector getBottomRight() {
-		return PVector.add(position, size);
 	}
 
 	public void Encapsulate(PVector p) {

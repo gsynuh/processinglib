@@ -40,7 +40,7 @@ void draw() {
   background(255);
   textSize(10);
 
-  PVector c = bloop.bounds.getCenter();
+  PVector c = bloop.bounds.center.copy();
   translate(width/2 - c.x, height/2 - c.y);
 
   stroke(64);
@@ -55,7 +55,7 @@ void draw() {
   bloop.render();
   bloop.renderBake();
 
-  PVector br = bloop.bounds.getBottomRight();
+  PVector br = bloop.bounds.bottomRight.copy();
   translate(bloop.bounds.position.x,br.y + 5);
 
   fill(255, 120);

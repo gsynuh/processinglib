@@ -66,14 +66,11 @@ void prepareXY(PlotterCanvas c) {
   c.setCanvasBounds(canvasArea = new Bounds(0, 0, 100, 100));
   c.setDrawBounds(new Bounds(0, 150, width, height-255));
 
-  PVector cbr = canvasArea.getBottomRight();
-  PVector center = canvasArea.getCenter();
-
   //c.rect(0, 0, 10, 10);
   //c.point(5, 5);
 
   c.pushMatrix();
-  c.translate(center.x, center.y -25);
+  c.translate(canvasArea.center.x, canvasArea.center.y -25);
   c.rotate(PI/4);
   for (int i = 0; i < 20; i++) {
     c.rotate(0.008f * i);
@@ -85,7 +82,7 @@ void prepareXY(PlotterCanvas c) {
 
 
   c.pushMatrix();
-  c.translate(center.x - 25, center.y +25);
+  c.translate(canvasArea.center.x - 25, canvasArea.center.y +25);
   c.rotate(-PI);
   for (int i = 0; i < 30; i++) {
     float a = i * PI/12;
@@ -96,7 +93,7 @@ void prepareXY(PlotterCanvas c) {
   c.popMatrix();
 
   c.pushMatrix();
-  c.translate(center.x + 25, center.y +25);
+  c.translate(canvasArea.center.x + 25, canvasArea.center.y +25);
   c.rotate(-PI);
   float rad = 10;
   float numCircles = 24;

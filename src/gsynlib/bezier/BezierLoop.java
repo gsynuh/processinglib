@@ -40,8 +40,7 @@ public class BezierLoop extends GsynlibBase {
 	}
 	
 	void setDefaultTargetBounds() {
-		targetBounds.position.set(0,0);
-		targetBounds.size.set(app().width,app().height);
+		targetBounds.set(0,0,app().width,app().height);
 	}
 
 	public void init(float numCurves, float _m) {
@@ -119,11 +118,13 @@ public class BezierLoop extends GsynlibBase {
 		calcBoundsFromBake();
 
 		// MARGIN
-
-		bounds.position.x -= m;
-		bounds.position.y -= m;
-		bounds.size.x += m * 2;
-		bounds.size.y += m * 2;
+		
+		bounds.set(
+				bounds.position.x - m,
+				bounds.position.y - m,
+				bounds.size.x + m*2f,
+				bounds.size.y + m*2f
+				);
 	}
 	
 	public PVector sampleCurve(float t) {
