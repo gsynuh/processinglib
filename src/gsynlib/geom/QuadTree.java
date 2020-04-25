@@ -6,9 +6,10 @@ import static processing.core.PApplet.*;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+import gsynlib.base.*;
 import gsynlib.utils.*;
 
-public class QuadTree {
+public class QuadTree extends GsynlibBase {
 
 	QuadTreeNode root;
 	ReentrantLock qtlock = new ReentrantLock();
@@ -49,11 +50,7 @@ public class QuadTree {
 		output.clear();
 		circleDataQueryResults.clear();
 
-		Bounds b = new Bounds(
-				position.x - radius,
-				position.y - radius,
-				radius * 2f,
-				radius *2f);
+		Bounds b = new Bounds(position.x - radius, position.y - radius, radius * 2f, radius * 2f);
 
 		root.queryData(b, circleDataQueryResults);
 
@@ -79,7 +76,7 @@ public class QuadTree {
 		root.queryData(b, output);
 	}
 
-	public void updatePosition(QuadTreeData d,PVector newPosition) {
+	public void updatePosition(QuadTreeData d, PVector newPosition) {
 		qtlock.lock();
 		try {
 			remove(d);
@@ -120,11 +117,11 @@ public class QuadTree {
 	}
 
 	public QuadTreeData getNearestData(PVector position) {
-		return root.searchNN(position,null);	
+		return root.searchNN(position, null);
 	}
-	
-	public QuadTreeData getNearestData(PVector position,QuadTreeData excludeData) {
-		return root.searchNN(position,excludeData);	
+
+	public QuadTreeData getNearestData(PVector position, QuadTreeData excludeData) {
+		return root.searchNN(position, excludeData);
 	}
 
 	public QuadTreeNode getNodeUnder(PVector position) {
@@ -184,8 +181,8 @@ public class QuadTree {
 
 		// set new root position
 
-		newRoot.bounds.set(root.bounds.position.x + newRootPosition.x,
-				root.bounds.position.y + newRootPosition.y,w * 2f, h * 2f );
+		newRoot.bounds.set(root.bounds.position.x + newRootPosition.x, root.bounds.position.y + newRootPosition.y,
+				w * 2f, h * 2f);
 
 		newRoot.split();
 
@@ -221,6 +218,41 @@ public class QuadTree {
 			resolveParentNodes(n.D, n);
 		}
 
+	}
+
+	public void render() {
+		app().pushMatrix();
+		app().pushStyle();
+		renderNode(this.root);
+		app().popStyle();
+		app().popMatrix();
+		this.resetVisited();
+	}
+
+	void renderNode(QuadTreeNode n) {
+
+		for (QuadTreeData d : n.data) {
+			app().point(d.position.x, d.position.y);
+		}
+
+		app().stroke(200, 200);
+		app().strokeWeight(1);
+
+		if (n.id == 1)
+			app().fill(255, 0, 0, 30);
+		else if (n.id == 2)
+			app().fill(0, 0, 255, 30);
+		else
+			app().noFill();
+
+		app().rect(n.bounds.position.x, n.bounds.position.y, n.bounds.size.x, n.bounds.size.y);
+
+		if (!n.isLeaf()) {
+			renderNode(n.A);
+			renderNode(n.B);
+			renderNode(n.C);
+			renderNode(n.D);
+		}
 	}
 
 }

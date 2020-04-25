@@ -7,9 +7,6 @@ Bounds b;
 float queryRadius = 50;
 
 QuadTreeData mouseData;
-PVector mousePoint = new PVector();
-ArrayList<QuadTreeData> queryResults = new ArrayList<QuadTreeData>();
-
 
 ArrayList<Walker> walkers = new ArrayList<Walker>();
 class Walker {
@@ -53,7 +50,7 @@ void setup() {
 
   GApp.set(this);
 
-  QuadTreeNode.maxNodeDataNum = 2;
+  QuadTreeNode.maxNodeDataNum = 3;
 
   b = new Bounds(325.3, 315.3, 125, 125);
   quadTree = new QuadTree(b);
@@ -87,92 +84,27 @@ void mousePressed() {
   }
 }
 
-float time = 0f;
-
+PVector pos = new PVector(0,0);
 void draw() {
   background(255);
-  noFill();
-
-  time += 0.04f;
-
-  mousePoint.set(mouseX, mouseY);
-
-  quadTree.resetVisited();
-
-  QuadTreeNode rootNode = quadTree.getRoot();
-
-  QuadTreeData closestData = quadTree.getNearestData(mousePoint);
-
-  strokeWeight(12);
-
-  for (QuadTreeData d : queryResults) {
-    point(d.position.x, d.position.y);
-  }
-
-  drawQuadTreeNode(rootNode);
-
-  if (closestData != null) {
-    noStroke();
-    fill(255, 0, 0);
-    ellipse(closestData.position.x, closestData.position.y, 10, 10);
-  }
-
-  noFill();
-  stroke(255, 0, 255);
-  strokeWeight(3);
-  rect(b.position.x, b.position.y, b.size.x, b.size.y);
-
 
   for (Walker w : walkers) {
     w.update();
     quadTree.updatePosition(w.data, w.position);
   }
+  
+  pos.set(mouseX,mouseY);
+  
+  QuadTreeData closestData = quadTree.getNearestData(pos);
+
+  quadTree.render();
+
+  if (closestData != null) {
+    fill(0, 0, 255);
+    ellipse(closestData.position.x, closestData.position.y, 20, 20);
+  }
 
   for (Walker w : walkers) {
     w.show();
-  }
-}
-
-// DRAW
-
-void drawBounds(Bounds b, int i) {
-
-  if (i >0) {
-    switch(i) {
-    case 1 : 
-      fill(255, 0, 0, 30); 
-      break;
-    case 2 : 
-      fill(0, 0, 255, 30); 
-      break;
-    }
-  } else
-    noFill();
-
-  rect(b.position.x, 
-    b.position.y, 
-    b.size.x, 
-    b.size.y);
-}
-
-void drawQuadTreeNode(QuadTreeNode q) {
-  noFill();
-  stroke(100);
-  strokeWeight(1);
-
-  drawBounds(q.bounds, q.id);
-
-  if (!q.isLeaf()) {
-    drawQuadTreeNode(q.A);
-    drawQuadTreeNode(q.B);
-    drawQuadTreeNode(q.C);
-    drawQuadTreeNode(q.D);
-  } else {
-
-    stroke(32);
-    strokeWeight(2);
-    for (QuadTreeData d : q.data) {
-      point(d.position.x, d.position.y);
-    }
   }
 }
