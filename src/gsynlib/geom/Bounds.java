@@ -11,7 +11,7 @@ public class Bounds extends GsynlibBase {
 
 	public PVector position = new PVector();
 	public PVector size = new PVector();
-		
+
 	public PVector center = new PVector();
 	public PVector bottomRight = new PVector();
 
@@ -22,10 +22,10 @@ public class Bounds extends GsynlibBase {
 		size.x = size.y = 200;
 		update();
 	}
-	
+
 	public void update() {
-		center.x = position.x + size.x*0.5f;
-		center.y = position.y + size.y*0.5f;
+		center.x = position.x + size.x * 0.5f;
+		center.y = position.y + size.y * 0.5f;
 		bottomRight.x = position.x + size.x;
 		bottomRight.y = position.y + size.y;
 	}
@@ -46,25 +46,25 @@ public class Bounds extends GsynlibBase {
 	}
 
 	public Bounds(float _x, float _y, float _w, float _h) {
-		this.set(_x,_y,_w,_h);
+		this.set(_x, _y, _w, _h);
 	}
-	
+
 	public void setPosition(float x, float y) {
-		this.position.set(x,y);
+		this.position.set(x, y);
 		this.update();
 	}
-	
+
 	public void setSize(float w, float h) {
-		this.size.set(w,h);
+		this.size.set(w, h);
 		this.update();
 	}
-	
+
 	public void set(Bounds b) {
 		this.position.set(b.position);
 		this.size.set(b.size);
 		update();
 	}
-	
+
 	public void set(float _x, float _y, float _w, float _h) {
 		position.x = _x;
 		position.y = _y;
@@ -88,38 +88,35 @@ public class Bounds extends GsynlibBase {
 		this.Encapsulate(new Bounds(p));
 	}
 
-	public void Inflate(float _size) {
+	public void InflateFromCenter(float _size) {
 
-		this.position.x += _size;
-		this.position.y += _size;
+		this.position.x -= _size;
+		this.position.y -= _size;
 		this.size.x += _size * 2f;
 		this.size.y += _size * 2f;
+		
+		if(this.size.x < 0) this.size.x = 0f;
+		if(this.size.y < 0) this.size.y = 0f;
 
-		this.size.x = this.size.x < 0 ? 0 : this.size.x;
-		this.size.y = this.size.y < 0 ? 0 : this.size.y;
+		this.update();
 	}
 
 	static PVector horizontal = new PVector();
 	static PVector vertical = new PVector();
 
 	public Boolean Intersects(Bounds b) {
-		
+
 		float leftA = this.position.x;
 		float rightA = this.position.x + this.size.x;
 		float topA = this.position.y;
 		float bottomA = this.position.y + this.size.y;
-		
+
 		float leftB = b.position.x;
 		float rightB = b.position.x + b.size.x;
 		float topB = b.position.y;
 		float bottomB = b.position.y + b.size.y;
-		
-		return !(
-					leftB > rightA 
-				|| rightB < leftA 
-				|| topB > bottomA 
-				|| bottomB < topA
-				);
+
+		return !(leftB > rightA || rightB < leftA || topB > bottomA || bottomB < topA);
 	}
 
 	public Boolean Contains(PVector p) {
@@ -155,6 +152,8 @@ public class Bounds extends GsynlibBase {
 
 		this.size.x = this.size.x < 0 ? -this.size.x : this.size.x;
 		this.size.y = this.size.y < 0 ? -this.size.y : this.size.y;
+
+		this.update();
 	}
 
 	public String toString() {

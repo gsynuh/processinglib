@@ -9,11 +9,11 @@ import static processing.core.PApplet.*;
 public class QuadTreeNode {
 
 	public static int maxNodeDataNum = 4;
+	public static Boolean speedHack = true;
 
 	public QuadTreeNode parentNode = null;
-	
 	public int id = 0;
-	
+
 	public static enum DIRECTION {
 		UNKNOWN, N, NE, E, SE, S, SW, W, NW
 	}
@@ -26,7 +26,7 @@ public class QuadTreeNode {
 	public QuadTreeNode C;
 	public QuadTreeNode D;
 	public Bounds bounds = new Bounds();
-	
+
 	public Boolean isLeaf() {
 		return (A == null || B == null || C == null || D == null);
 	}
@@ -58,11 +58,26 @@ public class QuadTreeNode {
 		}
 	}
 
-	public QuadTreeData getClosestDataInSelf(PVector point) {
-		return getClosestDataInCandidates(point, this.data);
+	public DIRECTION getDirection() {
+		if (this.parentNode == null)
+			return DIRECTION.UNKNOWN;
+
+		if (this == this.parentNode.A)
+			return DIRECTION.NW;
+		if (this == this.parentNode.B)
+			return DIRECTION.NE;
+		if (this == this.parentNode.C)
+			return DIRECTION.SW;
+		if (this == this.parentNode.D)
+			return DIRECTION.SE;
+
+		return DIRECTION.UNKNOWN;
 	}
-	
-	public static QuadTreeData getClosestDataInCandidates(PVector point, ArrayList<QuadTreeData> list) {
+
+	static ArrayList<QuadTreeData> NNCandidates = new ArrayList<QuadTreeData>();
+	static ArrayList<QuadTreeNode> QNCandidates = new ArrayList<QuadTreeNode>();
+
+	static QuadTreeData getClosestDataInCandidates(PVector point, ArrayList<QuadTreeData> list) {
 		QuadTreeData result = null;
 		float maxDist = Float.MAX_VALUE;
 		for (QuadTreeData d : list) {
@@ -75,119 +90,185 @@ public class QuadTreeNode {
 		return result;
 	}
 
-	static ArrayList<QuadTreeData> NNCandidates = new ArrayList<QuadTreeData>();
-	static ArrayList<QuadTreeNode> QNCandidates = new ArrayList<QuadTreeNode>();
+	Bounds nnBounds = new Bounds();
 
-	static void getNodeNeighbors(QuadTreeNode n, ArrayList<QuadTreeNode> output) {
-		output.clear();
-		getNeighborsInDirection(n, DIRECTION.N, output);
-		getNeighborsInDirection(n, DIRECTION.NE, output);
-		getNeighborsInDirection(n, DIRECTION.E, output);
-		getNeighborsInDirection(n, DIRECTION.SE, output);
-		getNeighborsInDirection(n, DIRECTION.SW, output);
-		getNeighborsInDirection(n, DIRECTION.W, output);
-	}
-	
-	static void getNeighborsInDirection(QuadTreeNode n, DIRECTION dir, ArrayList<QuadTreeNode> output) {
-		QuadTreeNode neighbor = getNofGreaterOrEqualSize(n,dir);
-		getNofSmallerSizes(n,neighbor,dir,output);
-	}
-	
-	public DIRECTION getDirection() {
-		if(this.parentNode == null)
-			return DIRECTION.UNKNOWN;
-		
-		if(this == this.parentNode.A)
-			return DIRECTION.NW;
-		if(this == this.parentNode.B)
-			return DIRECTION.NE;
-		if(this == this.parentNode.C)
-			return DIRECTION.SW;
-		if(this == this.parentNode.D)
-			return DIRECTION.SE;
-		
-		return DIRECTION.UNKNOWN;
-	}
-	
-	static QuadTreeNode getNofGreaterOrEqualSize(QuadTreeNode n, DIRECTION dir) {
-		if(n == null)
-			return n;
-		
-		if(dir == DIRECTION.N) {
-			
-			if(n.parentNode == null)
-				return null;
-			
-			n.id = 1;
-
-			if(n.getDirection() == DIRECTION.SW)
-				return n.parentNode.A; //NW
-			
-			if(n.getDirection() == DIRECTION.SE)
-				return n.parentNode.B; //NE
-			
-			QuadTreeNode node = getNofGreaterOrEqualSize(n.parentNode,dir);
-			if(node == null || node.isLeaf())
-				return node;
-			
-			//SHOULD BE NORTH
-			if(n.getDirection() == DIRECTION.NW)
-				return node.C;
-			else // NE
-				return node.D;
-		}
-		
-		return null;
-	}
-
-	static ArrayList<QuadTreeNode> candidates = new ArrayList<QuadTreeNode>();
-	static void getNofSmallerSizes(QuadTreeNode n,QuadTreeNode neighbor, DIRECTION dir, ArrayList<QuadTreeNode> output) {
-		if(n == null)
-			return;
-		
-		candidates.clear();
-
-		if(neighbor != null)
-			candidates.add(neighbor);
-		
-		if(dir == DIRECTION.N) {
-			while(candidates.size() > 0) {
-				QuadTreeNode c = candidates.get(0);
-				if(c.isLeaf()) {
-					c.id = 2;
-					output.add(c);
-				}else {
-					candidates.add(c.C);
-					candidates.add(c.D);
-				}
-				
-				candidates.remove(0);
-			}
-			
-		}
-		
-	}
-
-	public QuadTreeData searchNN(PVector position) {
+	public QuadTreeData searchNN(PVector position,QuadTreeData excludeData) {
 
 		NNCandidates.clear();
 		QNCandidates.clear();
 
 		QuadTreeNode nodeUnder = this.getNodeUnder(position);
+		
+		nodeUnder.id = 2;
 
-		getNodeNeighbors(nodeUnder, QNCandidates);
+		getNodeNeighborsCardinal(nodeUnder, QNCandidates);
 
-		// MARK VISITED AND COLLECT DATA CANDIDATES
-		for (QuadTreeNode q : QNCandidates) {
-			for (QuadTreeData d : q.data) {
-				if (!NNCandidates.contains(d))
-					NNCandidates.add(d);
-			}
+		QNCandidates.add(nodeUnder);
+
+		nnBounds.set(nodeUnder.bounds);
+
+		for (QuadTreeNode n : QNCandidates) {
+			nnBounds.Encapsulate(n.bounds);
+		}	 
+		
+		//WORST HACK POSSIBLE TO EXCLUDE EXTRA NODES*
+		//TODO: fix that by testing bounds differently or instead of intersection query do it with inclusive "contains"
+		if(speedHack)
+			nnBounds.InflateFromCenter(-0.0001f);
+		
+		/*
+		PApplet a = GApp.get();	
+		a.pushMatrix();
+		a.pushStyle();
+		a.noStroke();
+		a.fill(255,255,100);
+		a.rect(
+				nnBounds.position.x,
+				nnBounds.position.y,
+				nnBounds.size.x,
+				nnBounds.size.y
+				);	
+		a.popStyle();
+		a.popMatrix();
+		*/
+
+		this.queryData(nnBounds, NNCandidates);
+		
+		if(excludeData != null) {
+			NNCandidates.remove(excludeData);
 		}
 
 		QuadTreeData result = getClosestDataInCandidates(position, NNCandidates);
 
 		return result;
+	}
+
+	synchronized static void getNodeNeighborsCardinal(QuadTreeNode n, ArrayList<QuadTreeNode> output) {
+		getNeighborsInDirection(n, DIRECTION.N, output);
+		getNeighborsInDirection(n, DIRECTION.E, output);
+		getNeighborsInDirection(n, DIRECTION.S, output);
+		getNeighborsInDirection(n, DIRECTION.W, output);
+	}
+
+	static ArrayList<QuadTreeNode> neighborCandidates = new ArrayList<QuadTreeNode>();
+
+	static void getNeighborsInDirection(QuadTreeNode n, DIRECTION dir, ArrayList<QuadTreeNode> output) {
+		QuadTreeNode neighbor = getEqualOrBigger(n, dir);
+		getSmaller(neighbor, dir, output);
+	}
+
+	static QuadTreeNode getEqualOrBigger(QuadTreeNode n, DIRECTION dir) {
+		if (n == null || n.parentNode == null)
+			return null;
+
+		QuadTreeNode node = null;
+
+		// CARDINAL DIRS
+
+		if (dir == DIRECTION.N) {
+			// GOING N, IF SELF IS OPPOSITE, ADD SYMMETRIC EQUIVALENT.
+			if (n.getDirection() == DIRECTION.SW)
+				return n.parentNode.A;
+			if (n.getDirection() == DIRECTION.SE)
+				return n.parentNode.B;
+
+			node = getEqualOrBigger(n.parentNode, dir);
+
+			if (node == null || node.isLeaf())
+				return node;
+
+			// NODE IS NOW NORTH, DISCRIMINATE W/E AND ADD NODE'S OPPOSITE (C = SW, D = SE)
+			if (n.getDirection() == DIRECTION.NW)
+				return node.C;
+			else
+				return node.D;
+
+		} else if (dir == DIRECTION.S) {
+
+			if (n.getDirection() == DIRECTION.NW)
+				return n.parentNode.C;
+			if (n.getDirection() == DIRECTION.NE)
+				return n.parentNode.D;
+
+			node = getEqualOrBigger(n.parentNode, dir);
+
+			if (node == null || node.isLeaf())
+				return node;
+
+			if (n.getDirection() == DIRECTION.SW)
+				return node.A;
+			else
+				return node.B;
+
+		} else if (dir == DIRECTION.W) {
+
+			if (n.getDirection() == DIRECTION.NE)
+				return n.parentNode.A;
+			if (n.getDirection() == DIRECTION.SE)
+				return n.parentNode.C;
+
+			node = getEqualOrBigger(n.parentNode, dir);
+
+			if (node == null || node.isLeaf())
+				return node;
+
+			if (n.getDirection() == DIRECTION.NW)
+				return node.B;
+			else
+				return node.D;
+
+		} else if (dir == DIRECTION.E) {
+
+			if (n.getDirection() == DIRECTION.NW)
+				return n.parentNode.B;
+			if (n.getDirection() == DIRECTION.SW)
+				return n.parentNode.D;
+
+			node = getEqualOrBigger(n.parentNode, dir);
+
+			if (node == null || node.isLeaf())
+				return node;
+
+			if (n.getDirection() == DIRECTION.NE)
+				return node.A;
+			else
+				return node.C;
+
+		}
+
+		return null;
+	}
+
+	static void getSmaller(QuadTreeNode neighbor, DIRECTION dir, ArrayList<QuadTreeNode> output) {
+		neighborCandidates.clear();
+
+		if (neighbor != null)
+			neighborCandidates.add(neighbor);
+
+		while (neighborCandidates.size() > 0) {
+			QuadTreeNode c = neighborCandidates.get(0);
+
+			if (c.isLeaf()) {
+				output.add(c);
+			} else {
+				if (dir == DIRECTION.N) {
+					neighborCandidates.add(c.C);
+					neighborCandidates.add(c.D);
+				} else if (dir == DIRECTION.S) {
+					neighborCandidates.add(c.A);
+					neighborCandidates.add(c.B);
+				} else if (dir == DIRECTION.W) {
+					neighborCandidates.add(c.B);
+					neighborCandidates.add(c.D);
+				} else if (dir == DIRECTION.E) {
+					neighborCandidates.add(c.A);
+					neighborCandidates.add(c.C);
+				}
+			}
+
+			neighborCandidates.remove(0);
+		}
+
 	}
 
 	public void getAllData(ArrayList<QuadTreeData> output) {
@@ -207,24 +288,46 @@ public class QuadTreeNode {
 			}
 		}
 	}
-	
+
 	// RECT QUERY
-	public void query(Bounds b, ArrayList<QuadTreeData> results) {
-		query(this, b, results);
+	public void queryData(Bounds b, ArrayList<QuadTreeData> results) {
+		queryData(this, b, results);
 	}
 
-	void query(QuadTreeNode n, Bounds b, ArrayList<QuadTreeData> results) {
+	public void queryNodes(Bounds b, ArrayList<QuadTreeNode> results) {
+		queryNodes(this, b, results);
+	}
+
+	void queryNodes(QuadTreeNode n, Bounds b, ArrayList<QuadTreeNode> results) {
 
 		if (!n.bounds.Intersects(b)) {
 			return;
 		}
 
 		if (!n.isLeaf()) {
-			query(n.A, b, results);
-			query(n.B, b, results);
-			query(n.C, b, results);
-			query(n.D, b, results);
+			queryNodes(n.A, b, results);
+			queryNodes(n.B, b, results);
+			queryNodes(n.C, b, results);
+			queryNodes(n.D, b, results);
 		} else {
+			n.id = 2;
+			results.add(n);
+		}
+	}
+
+	void queryData(QuadTreeNode n, Bounds b, ArrayList<QuadTreeData> results) {
+
+		if (!n.bounds.Intersects(b)) {
+			return;
+		}
+
+		if (!n.isLeaf()) {
+			queryData(n.A, b, results);
+			queryData(n.B, b, results);
+			queryData(n.C, b, results);
+			queryData(n.D, b, results);
+		} else {
+			n.id = 2;
 			for (QuadTreeData d : n.data) {
 				if (d != null) {
 					if (b.Contains(d.position))
@@ -282,7 +385,7 @@ public class QuadTreeNode {
 
 	ArrayList<QuadTreeData> collect = new ArrayList<QuadTreeData>();
 	ArrayList<QuadTreeData> splitData = new ArrayList();
-	
+
 	public void collapse() {
 		if (this.parentNode == null) // ROOT
 			return;
@@ -300,7 +403,7 @@ public class QuadTreeNode {
 			this.parentNode.data.addAll(collect);
 			this.parentNode.collapse();
 		}
-		
+
 		collect.clear();
 	}
 
@@ -335,6 +438,6 @@ public class QuadTreeNode {
 		for (QuadTreeData d : splitData) {
 			this.insert(d);
 		}
-		splitData.clear();	
+		splitData.clear();
 	}
 }

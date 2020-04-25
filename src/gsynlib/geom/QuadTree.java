@@ -55,7 +55,7 @@ public class QuadTree {
 				radius * 2f,
 				radius *2f);
 
-		root.query(b, circleDataQueryResults);
+		root.queryData(b, circleDataQueryResults);
 
 		float sqrRadius = radius * radius;
 
@@ -76,10 +76,10 @@ public class QuadTree {
 
 	public void queryBounds(Bounds b, ArrayList<QuadTreeData> output) {
 		output.clear();
-		root.query(b, output);
+		root.queryData(b, output);
 	}
 
-	public void updatePosition(QuadTreeData d, PVector newPosition) {
+	public void updatePosition(QuadTreeData d,PVector newPosition) {
 		qtlock.lock();
 		try {
 			remove(d);
@@ -120,7 +120,11 @@ public class QuadTree {
 	}
 
 	public QuadTreeData getNearestData(PVector position) {
-		return root.searchNN(position);
+		return root.searchNN(position,null);	
+	}
+	
+	public QuadTreeData getNearestData(PVector position,QuadTreeData excludeData) {
+		return root.searchNN(position,excludeData);	
 	}
 
 	public QuadTreeNode getNodeUnder(PVector position) {
