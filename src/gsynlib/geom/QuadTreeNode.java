@@ -92,49 +92,54 @@ public class QuadTreeNode {
 
 	Bounds nnBounds = new Bounds();
 
-	public QuadTreeData searchNN(PVector position,QuadTreeData excludeData) {
+	public QuadTreeData searchNN(PVector position, QuadTreeData excludeData) {
 
 		NNCandidates.clear();
 		QNCandidates.clear();
 
 		QuadTreeNode nodeUnder = this.getNodeUnder(position);
-		
+
 		nodeUnder.id = 2;
 
 		getNodeNeighborsCardinal(nodeUnder, QNCandidates);
 
 		QNCandidates.add(nodeUnder);
 
-		nnBounds.set(nodeUnder.bounds);
+		if (nodeUnder.parentNode != null) {
 
-		for (QuadTreeNode n : QNCandidates) {
-			nnBounds.Encapsulate(n.bounds);
-		}	 
-		
-		//WORST HACK POSSIBLE TO EXCLUDE EXTRA NODES*
-		//TODO: fix that by testing bounds differently or instead of intersection query do it with inclusive "contains"
-		if(speedHack)
-			nnBounds.InflateFromCenter(-0.0001f);
-		
-		/*
-		PApplet a = GApp.get();	
-		a.pushMatrix();
-		a.pushStyle();
-		a.noStroke();
-		a.fill(255,255,100);
-		a.rect(
-				nnBounds.position.x,
-				nnBounds.position.y,
-				nnBounds.size.x,
-				nnBounds.size.y
-				);	
-		a.popStyle();
-		a.popMatrix();
-		*/
+			nnBounds.set(nodeUnder.bounds);
 
-		this.queryData(nnBounds, NNCandidates);
-		
-		if(excludeData != null) {
+			float biggestNDim = 0;
+
+			for (QuadTreeNode n : QNCandidates) {
+				nnBounds.Encapsulate(n.bounds);
+				
+				if(n == nodeUnder)
+					continue;
+
+				if (n.bounds.size.x > biggestNDim) {
+					biggestNDim = n.bounds.size.x;
+				}
+			}
+
+			// WORST HACK POSSIBLE TO EXCLUDE EXTRA NODES*
+			// TODO: fix that by testing bounds differently or instead of intersection query
+			// do it with inclusive "contains"
+			if (speedHack)
+				nnBounds.InflateFromCenter(-0.0001f);
+
+			// ALGORITHM ISN'T SUCCESSFUL IF QUAD IS SURROUNDED BY RECURSIVELY EMPTY
+			// NEIGHBORS, SO INFLATE BOUNDS UTIL YOU GET SOMETHING
+			while (NNCandidates.size() < 1) {
+				this.queryData(nnBounds, NNCandidates);
+				nnBounds.InflateFromCenter(biggestNDim);
+			}
+
+		}else { // POINT IN ROOT.
+			NNCandidates.addAll(nodeUnder.data);
+		}
+
+		if (excludeData != null) {
 			NNCandidates.remove(excludeData);
 		}
 
@@ -403,7 +408,7 @@ public class QuadTreeNode {
 			this.parentNode.data.addAll(collect);
 			this.parentNode.collapse();
 		}
-
+		
 		collect.clear();
 	}
 

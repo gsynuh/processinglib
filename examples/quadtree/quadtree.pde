@@ -22,6 +22,8 @@ class Walker {
     position.y += random(-1, 1);
     inCollision = false;
 
+    //This is not an appropriate way to test for collision
+    //rather, circle query check would be faster since all Walkers have the same size.
     QuadTreeData nearestQTD = quadTree.getNearestData(position, data);
     if (nearestQTD != null) {
       float d = GApp.sqrDist(position, nearestQTD.position);
@@ -57,7 +59,7 @@ void setup() {
   quadTree = new QuadTree(b);
 
 
-  for (int i = 0; i < 40; i++) {
+  for (int i = 0; i < 500; i++) {
     PVector pos = new PVector(
       random(width), 
       random(height)
@@ -100,17 +102,6 @@ void draw() {
   QuadTreeNode rootNode = quadTree.getRoot();
 
   QuadTreeData closestData = quadTree.getNearestData(mousePoint);
-
-  /* draw Circle query
-   stroke(0, 255, 255);
-   fill(0, 255, 255, 100);
-   ellipse(
-   mousePoint.x, 
-   mousePoint.y, 
-   rad * 2f, 
-   rad * 2f
-   );
-   */
 
   strokeWeight(12);
 
