@@ -126,6 +126,16 @@ public class QuadTree<T extends QuadTreeData> extends GsynlibBase {
 			qtlock.unlock();
 		}
 	}
+	
+	public void clear() {
+		//RECURSIVELY GET ALL ROOT DATA AND REMOVE AS WE USUALLY WOULD.
+		//BRUTEFORCE VERSION TO MAKE SURE CLEANUP IS DONE RIGHT, BUT SLOW.
+		ArrayList<T> output = new ArrayList<T>();
+		root.getAllData(output);
+		for(T d : output) {
+			this.remove(d);
+		}
+	}
 
 	public QuadTreeData getNearestData(PVector position) {
 		return root.searchNN(position, null);

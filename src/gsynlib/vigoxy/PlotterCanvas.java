@@ -153,8 +153,8 @@ public class PlotterCanvas extends GsynlibBase {
 		prepared = false;
 	}
 	
-	public void particle(PVector pos, PVector vel, float lifeTime) {
-		Particle p = this.particleSystem.createParticle(pos,vel,lifeTime);
+	public Particle particle(PVector pos, float lifeTime) {
+		return this.particleSystem.createParticle(pos,lifeTime);
 	}
 
 	public void image(PImage im, float x, float y, float w, float h) {

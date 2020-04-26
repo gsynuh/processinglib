@@ -6,7 +6,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import gsynlib.base.GsynlibBase;
 
 import gsynlib.scheduling.*;
-import gsynlib.scheduling.StatefulCommand.RUNSTATE;
 import gsynlib.utils.GApp;
 import gsynlib.vigoxy.commands.*;
 import jssc.*;

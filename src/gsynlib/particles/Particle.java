@@ -1,6 +1,11 @@
 package gsynlib.particles;
 
 import processing.core.PVector;
+import static processing.core.PApplet.*;
+
+import java.util.ArrayList;
+
+import gsynlib.geom.QuadTreeDataVector;
 
 public class Particle {
 	
@@ -13,9 +18,9 @@ public class Particle {
 	public PVector velocity = new PVector();
 	public PVector acceleration = new PVector();
 	
-	PVector initialPosition = new PVector();
-	PVector initialVelocity = new PVector();
-	PVector initialAccel = new PVector();
+	public PVector initialPosition = new PVector();
+	public PVector initialVelocity = new PVector();
+	public PVector initialAccel = new PVector();
 	
 	ParticleSystem ps;
 	
@@ -37,12 +42,6 @@ public class Particle {
 		this.initialPosition.set(initPos);
 	}
 	
-	public void init(PVector initPos,PVector initVel) {
-		init(initPos);
-		this.velocity.set(initVel);
-		this.initialVelocity.set(initVel);
-	}
-	
 	public void updateTime(float deltaTime) {
 		currentTime += deltaTime;
 		
@@ -53,9 +52,63 @@ public class Particle {
 		}
 	}
 	
+	ArrayList<QuadTreeDataVector> queryResults = new ArrayList<QuadTreeDataVector>();
+	PVector f = new PVector();
+	public void doForces() {
+		queryResults.clear();
+		ps.forceField.queryCircle(this.position, 50, queryResults);
+		
+		f.set(0,0);
+		float c = 0f;
+		
+		for(QuadTreeDataVector v : queryResults) { 
+			f.add(v.vector);
+			c++;
+		}
+		
+		if(c > 0) {
+			f.div(c);
+		}
+		
+		this.acceleration.add(f);
+		
+	}
+	
 	public void update(float deltaTime) {
+		
+		this.velocity.x += this.acceleration.x;
+		this.velocity.y += this.acceleration.y;
+		
+		this.velocity.x *= ps.drag;
+		this.velocity.y *= ps.drag;
+		
+		this.velocity.limit(ps.maxVelocity);
+		
 		this.position.x += this.velocity.x * deltaTime;
 		this.position.y += this.velocity.y * deltaTime;
+		
+		if(this.ps.wrapParticles) {
+			doBounds();
+		}
+		
+	}
+	
+	void doBounds() {
+		if(this.position.x > ps.bounds.bottomRight.x) {
+			this.position.x = ps.bounds.position.x + abs(ps.bounds.bottomRight.x - this.position.x);
+		}
+		
+		if(this.position.x < ps.bounds.position.x) {
+			this.position.x = ps.bounds.bottomRight.x - abs(ps.bounds.bottomRight.x - this.position.x);
+		}
+		
+		if(this.position.y > ps.bounds.bottomRight.y) {
+			this.position.y = ps.bounds.position.y + abs(ps.bounds.bottomRight.y - this.position.y);
+		}
+		
+		if(this.position.y < ps.bounds.position.y) {
+			this.position.y = ps.bounds.bottomRight.y - abs(ps.bounds.position.y - this.position.y);
+		}
 	}
 	
 }
