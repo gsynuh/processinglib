@@ -11,9 +11,11 @@ public class Particle {
 	
 	public PVector position = new PVector();
 	public PVector velocity = new PVector();
+	public PVector acceleration = new PVector();
 	
 	PVector initialPosition = new PVector();
 	PVector initialVelocity = new PVector();
+	PVector initialAccel = new PVector();
 	
 	ParticleSystem ps;
 	
@@ -27,6 +29,7 @@ public class Particle {
 		
 		position.set(initialPosition);
 		velocity.set(initialVelocity);
+		acceleration.set(initialAccel);
 	}
 	
 	public void init(PVector initPos) {

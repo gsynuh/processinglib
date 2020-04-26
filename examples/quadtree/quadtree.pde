@@ -18,7 +18,7 @@ void setup() {
   QuadTreeNode.maxNodeDataNum = 3;
 
   b = new Bounds(325.3, 315.3, 125, 125);
-  quadTree = new QuadTree(b);
+  quadTree = new QuadTree<Walker>(b);
 
 
   for (int i = 0; i < 1; i++) {
@@ -27,11 +27,9 @@ void setup() {
       random(height)
       );
     Walker w = new Walker();
-    QuadTreeDataObject d = new QuadTreeDataObject(pos, w);
-
-    if (quadTree.insert(d)) {
-      w.data = d;
-      w.position.set(d.position);
+    w.position.set(pos);
+    
+    if (quadTree.insert(w)) {
       walkers.add(w);
     }
   }
@@ -40,11 +38,9 @@ void setup() {
 void mouseDragged() {
   PVector pos = new PVector(mouseX + random(-20, 20), mouseY + random(-20, 20));
   Walker w = new Walker();
-  QuadTreeDataObject d = new QuadTreeDataObject(pos, w);
+  w.position.set(pos);
 
-  if (quadTree.insert(d)) {
-    w.data = d;
-    w.position.set(d.position);
+  if (quadTree.insert(w)) {
     walkers.add(w);
   }
 }
@@ -55,7 +51,7 @@ void draw() {
 
   for (Walker w : walkers) {
     w.update();
-    quadTree.updatePosition(w.data, w.position);
+    quadTree.updateData(w);
   }
 
   pos.set(mouseX, mouseY);

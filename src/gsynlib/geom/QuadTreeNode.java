@@ -6,12 +6,13 @@ import gsynlib.utils.*;
 import processing.core.*;
 import static processing.core.PApplet.*;
 
-public class QuadTreeNode {
+public class QuadTreeNode<T extends QuadTreeData> {
 
 	public static int maxNodeDataNum = 4;
 	public static Boolean speedHack = true;
 
-	public QuadTreeNode parentNode = null;
+	public QuadTree<T> tree = null;
+	public QuadTreeNode<T> parentNode = null;
 	public int id = 0;
 
 	public static enum DIRECTION {
@@ -21,17 +22,17 @@ public class QuadTreeNode {
 	// A B
 	// C D
 
-	public QuadTreeNode A;
-	public QuadTreeNode B;
-	public QuadTreeNode C;
-	public QuadTreeNode D;
+	public QuadTreeNode<T> A;
+	public QuadTreeNode<T> B;
+	public QuadTreeNode<T> C;
+	public QuadTreeNode<T> D;
 	public Bounds bounds = new Bounds();
 
 	public Boolean isLeaf() {
 		return (A == null || B == null || C == null || D == null);
 	}
 
-	public ArrayList<QuadTreeData> data = new ArrayList<QuadTreeData>();
+	public ArrayList<T> data = new ArrayList<T>();
 
 	public QuadTreeNode getNodeUnder(PVector pos) {
 		return getNodeUnder(this, pos);
@@ -73,10 +74,7 @@ public class QuadTreeNode {
 		return DIRECTION.UNKNOWN;
 	}
 
-	static ArrayList<QuadTreeData> NNCandidates = new ArrayList<QuadTreeData>();
-	static ArrayList<QuadTreeNode> QNCandidates = new ArrayList<QuadTreeNode>();
-
-	static QuadTreeData getClosestDataInCandidates(PVector point, ArrayList<QuadTreeData> list) {
+	QuadTreeData getClosestDataInCandidates(PVector point, ArrayList<T> list) {
 		QuadTreeData result = null;
 		float maxDist = Float.MAX_VALUE;
 		for (QuadTreeData d : list) {
@@ -93,16 +91,16 @@ public class QuadTreeNode {
 
 	public QuadTreeData searchNN(PVector position, QuadTreeData excludeData) {
 
-		NNCandidates.clear();
-		QNCandidates.clear();
+		tree.NNCandidates.clear();
+		tree.QNCandidates.clear();
 
 		QuadTreeNode nodeUnder = this.getNodeUnder(position);
 
 		nodeUnder.id = 2;
 
-		getNodeNeighborsCardinal(nodeUnder, QNCandidates);
+		getNodeNeighborsCardinal(nodeUnder, tree.QNCandidates);
 
-		QNCandidates.add(nodeUnder);
+		tree.QNCandidates.add(nodeUnder);
 
 		if (nodeUnder.parentNode != null) {
 
@@ -110,10 +108,10 @@ public class QuadTreeNode {
 
 			float biggestNDim = 0;
 
-			for (QuadTreeNode n : QNCandidates) {
+			for (QuadTreeNode n : tree.QNCandidates) {
 				nnBounds.Encapsulate(n.bounds);
-				
-				if(n == nodeUnder)
+
+				if (n == nodeUnder)
 					continue;
 
 				if (n.bounds.size.x > biggestNDim) {
@@ -129,20 +127,20 @@ public class QuadTreeNode {
 
 			// ALGORITHM ISN'T SUCCESSFUL IF QUAD IS SURROUNDED BY RECURSIVELY EMPTY
 			// NEIGHBORS, SO INFLATE BOUNDS UTIL YOU GET SOMETHING
-			while (NNCandidates.size() < 1) {
-				this.queryData(nnBounds, NNCandidates);
+			while (tree.NNCandidates.size() < 1) {
+				this.queryData(nnBounds, tree.NNCandidates);
 				nnBounds.InflateFromCenter(biggestNDim);
 			}
 
-		}else { // POINT IN ROOT.
-			NNCandidates.addAll(nodeUnder.data);
+		} else { // POINT IN ROOT.
+			tree.NNCandidates.addAll(nodeUnder.data);
 		}
 
 		if (excludeData != null) {
-			NNCandidates.remove(excludeData);
+			tree.NNCandidates.remove(excludeData);
 		}
 
-		QuadTreeData result = getClosestDataInCandidates(position, NNCandidates);
+		QuadTreeData result = getClosestDataInCandidates(position, tree.NNCandidates);
 
 		return result;
 	}
@@ -275,34 +273,35 @@ public class QuadTreeNode {
 
 	}
 
-	public void getAllData(ArrayList<QuadTreeData> output) {
+	public void getAllData(ArrayList<T> output) {
 		getAllData(this, output);
 	}
 
-	void getAllData(QuadTreeNode n, ArrayList<QuadTreeData> output) {
+	void getAllData(QuadTreeNode<T> n, ArrayList<T> output) {
+		
+		for (T d : n.data) {
+			if (d != null)
+				output.add(d);
+		}
+		
 		if (!n.isLeaf()) {
 			getAllData(n.A, output);
 			getAllData(n.B, output);
 			getAllData(n.C, output);
 			getAllData(n.D, output);
-		} else {
-			for (QuadTreeData d : n.data) {
-				if (d != null)
-					output.add(d);
-			}
 		}
 	}
 
 	// RECT QUERY
-	public void queryData(Bounds b, ArrayList<QuadTreeData> results) {
+	public void queryData(Bounds b, ArrayList<T> results) {
 		queryData(this, b, results);
 	}
 
-	public void queryNodes(Bounds b, ArrayList<QuadTreeNode> results) {
+	public void queryNodes(Bounds b, ArrayList<QuadTreeNode<T>> results) {
 		queryNodes(this, b, results);
 	}
 
-	void queryNodes(QuadTreeNode n, Bounds b, ArrayList<QuadTreeNode> results) {
+	void queryNodes(QuadTreeNode<T> n, Bounds b, ArrayList<QuadTreeNode<T>> results) {
 
 		if (!n.bounds.Intersects(b)) {
 			return;
@@ -319,7 +318,7 @@ public class QuadTreeNode {
 		}
 	}
 
-	void queryData(QuadTreeNode n, Bounds b, ArrayList<QuadTreeData> results) {
+	void queryData(QuadTreeNode<T> n, Bounds b, ArrayList<T> results) {
 
 		if (!n.bounds.Intersects(b)) {
 			return;
@@ -332,7 +331,7 @@ public class QuadTreeNode {
 			queryData(n.D, b, results);
 		} else {
 			n.id = 2;
-			for (QuadTreeData d : n.data) {
+			for (T d : n.data) {
 				if (d != null) {
 					if (b.Contains(d.position))
 						results.add(d);
@@ -341,7 +340,7 @@ public class QuadTreeNode {
 		}
 	}
 
-	public Boolean insert(QuadTreeData d) {
+	public Boolean insert(T d) {
 
 		if (!this.bounds.Contains(d.position))
 			return false;
@@ -356,8 +355,11 @@ public class QuadTreeNode {
 
 		} else {
 
-			if (data.size() < PApplet.max(1, maxNodeDataNum)) {
-				data.add(d);
+			if (this.data.size() < PApplet.max(1, maxNodeDataNum)) {
+				if (!this.data.contains(d)) {
+					d.node = this;
+					this.data.add(d);
+				}
 			} else {
 				this.split();
 				return insert(d);
@@ -368,15 +370,14 @@ public class QuadTreeNode {
 	}
 
 	public Boolean remove(QuadTreeData d) {
-		if (!this.bounds.Contains(d.position))
-			return false;
 
 		Boolean r = false;
 
-		for (Iterator<QuadTreeData> iterator = data.iterator(); iterator.hasNext();) {
-			QuadTreeData da = iterator.next();
+		for (Iterator<T> iterator = data.iterator(); iterator.hasNext();) {
+			T da = iterator.next();
 			if (da == d) {
 				iterator.remove();
+				da.node = null;
 				r = true;
 			}
 		}
@@ -387,8 +388,8 @@ public class QuadTreeNode {
 		return r;
 	}
 
-	ArrayList<QuadTreeData> collect = new ArrayList<QuadTreeData>();
-	ArrayList<QuadTreeData> splitData = new ArrayList();
+	ArrayList<T> collect = new ArrayList<T>();
+	ArrayList<T> splitData = new ArrayList<T>();
 
 	public void collapse() {
 		if (this.parentNode == null) // ROOT
@@ -399,15 +400,22 @@ public class QuadTreeNode {
 
 		int countParentChildren = collect.size();
 
-		if (countParentChildren <= maxNodeDataNum) {
+		if (countParentChildren < maxNodeDataNum) {
 			this.parentNode.A = null;
 			this.parentNode.B = null;
 			this.parentNode.C = null;
 			this.parentNode.D = null;
-			this.parentNode.data.addAll(collect);
+					
+			this.parentNode.data.clear();
+			
+			for (T d : collect) {
+				this.parentNode.insert(d);
+			}
+
 			this.parentNode.collapse();
+
 		}
-		
+
 		collect.clear();
 	}
 
@@ -415,15 +423,20 @@ public class QuadTreeNode {
 
 		// CREATE ABCD and their bounds
 
-		A = new QuadTreeNode();
-		B = new QuadTreeNode();
-		C = new QuadTreeNode();
-		D = new QuadTreeNode();
+		A = new QuadTreeNode<T>();
+		B = new QuadTreeNode<T>();
+		C = new QuadTreeNode<T>();
+		D = new QuadTreeNode<T>();
 
 		A.parentNode = this;
 		B.parentNode = this;
 		C.parentNode = this;
 		D.parentNode = this;
+
+		A.tree = this.tree;
+		B.tree = this.tree;
+		C.tree = this.tree;
+		D.tree = this.tree;
 
 		float w = this.bounds.size.x * 0.5f;
 		float h = this.bounds.size.y * 0.5f;
@@ -439,7 +452,7 @@ public class QuadTreeNode {
 		splitData.addAll(this.data);
 		this.data.clear();
 
-		for (QuadTreeData d : splitData) {
+		for (T d : splitData) {
 			this.insert(d);
 		}
 		splitData.clear();

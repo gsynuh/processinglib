@@ -1,6 +1,4 @@
-public class Walker {
-  QuadTreeDataObject data;
-  PVector position = new PVector();
+public class Walker extends QuadTreeData {
   Boolean inCollision = false;
 
   public void update() {
@@ -10,7 +8,7 @@ public class Walker {
 
     //This is not an appropriate way to test for collision
     //rather, circle query check would be faster since all Walkers have the same size.
-    QuadTreeData nearestQTD = quadTree.getNearestData(position, data);
+    QuadTreeData nearestQTD = quadTree.getNearestData(position, this);
     if (nearestQTD != null) {
       float d = GApp.sqrDist(position, nearestQTD.position);
       if (d <= 100) {

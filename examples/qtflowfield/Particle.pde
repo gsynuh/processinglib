@@ -3,16 +3,17 @@ ArrayList<QuadTreeDataVector> forces = new ArrayList<QuadTreeDataVector>();
 
 public class Particle {
 
+  PVector oldPosition = new PVector();
   PVector position = new PVector();
   PVector vel = new PVector();
   PVector accel = new PVector();
   
+  float range = 0;
+  float size = 1;
+  
   public Particle() {
-    accel.x = random(-1000,1000);
-    accel.y = random(-1000,1000);
+    range = 45;
   }
-
-  float size = 2;
 
 
   void addForce(float x, float y) {
@@ -37,11 +38,39 @@ public class Particle {
       addForce(x, y);
     }
   }
+  
+  PVector p = new PVector();
+  float bounds = 50;
+  void boundForces() {
+    p.set(0,0);
+    
+    
+    if(this.position.x < bounds) {
+      p.x += 1;
+    } 
+    else if(this.position.x > width - bounds) {
+      p.x -= 1;
+    }
+    
+    if(this.position.y < bounds) {
+      p.y += 1;
+    }
+    else if(this.position.y > height - bounds) {
+      p.y -= 1;
+    }
+    
+    float d = p.mag();
+    
+    if(d > 0) {
+    p.setMag(10);
+    addForce(p.x,p.y);
+    }
+  }
 
   public void update() {
     queryResult.clear();
     forces.clear();
-    quadTree.queryCircle(this.position, 50, queryResult);
+    quadTree.queryCircle(this.position, range, queryResult);
     for (QuadTreeData d : queryResult) {
       if (d instanceof QuadTreeDataVector) {
         forces.add((QuadTreeDataVector)d);
@@ -50,35 +79,53 @@ public class Particle {
 
     processForces();
     accel.mult(0.951452);
-    
+
+    oldPosition.set(position);
+
     accel.limit(40);
     vel.add(accel);
-    vel.limit(4);
+    vel.limit(8);
     position.add(vel);
     
     doBounds();
+    boundForces();
   }
-  
-  void doBounds() {
-      float r =0;
 
-    if (position.x < -r)
-      position.x = width -r;
-    if (position.y < -r)
-      position.y = height -r;
-    if (position.x > width + r)
-      position.x = -r;
-    if (position.y > height + r)
-      position.y = -r;
+  void doBounds() {
+    Boolean teleported = false;
+
+    if (position.x < bounds) {
+      position.x = width -bounds;
+      teleported= true;
+    }
+    if (position.y < bounds) {
+      position.y = height -bounds;
+      teleported = true;
+    }
+    if (position.x > width - bounds) {
+      position.x = bounds;
+      teleported = true;
+    }
+    if (position.y > height - bounds) {
+      position.y = bounds;
+      teleported = true;
+    }
+
+    if (teleported)
+      oldPosition.set(position);
   }
 
   public void render() {
     pushMatrix();
     pushStyle();
-    noStroke();
-    fill(0);
-    translate(position.x, position.y);
-    ellipse(-size/2, -size/2, size, size);
+    
+    colorMode(HSB);
+    int h = ceil(map(vel.heading(), -PI, PI, 0,255));
+
+    stroke(h,255,255);
+    strokeWeight(size);
+    line(oldPosition.x, oldPosition.y, position.x, position.y);
+
     popStyle();
     popMatrix();
   }

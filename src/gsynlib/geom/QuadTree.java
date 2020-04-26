@@ -9,18 +9,24 @@ import java.util.concurrent.locks.ReentrantLock;
 import gsynlib.base.*;
 import gsynlib.utils.*;
 
-public class QuadTree extends GsynlibBase {
+public class QuadTree<T extends QuadTreeData> extends GsynlibBase {
 
-	QuadTreeNode root;
+	QuadTreeNode<T> root;
 	ReentrantLock qtlock = new ReentrantLock();
+	
+	
+	//HELPER LISTS
+	public 	ArrayList<T> NNCandidates = new ArrayList<T>();
+	public ArrayList<QuadTreeNode> QNCandidates = new ArrayList<QuadTreeNode>();
 
-	public QuadTreeNode getRoot() {
+	public QuadTreeNode<T> getRoot() {
 		return this.root;
 	}
 
 	public QuadTree(Bounds initialBounds) {
-		root = new QuadTreeNode();
+		root = new QuadTreeNode<T>();
 
+		root.tree = this;
 		root.bounds.set(initialBounds);
 	}
 
@@ -28,7 +34,7 @@ public class QuadTree extends GsynlibBase {
 		resetVisited(root);
 	}
 
-	void resetVisited(QuadTreeNode n) {
+	void resetVisited(QuadTreeNode<T> n) {
 		n.id = 0;
 		if (!n.isLeaf()) {
 			resetVisited(n.A);
@@ -38,15 +44,15 @@ public class QuadTree extends GsynlibBase {
 		}
 	}
 
-	public ArrayList<QuadTreeData> queryCircle(PVector position, float radius) {
-		ArrayList<QuadTreeData> results = new ArrayList<QuadTreeData>();
+	public ArrayList<T> queryCircle(PVector position, float radius) {
+		ArrayList<T> results = new ArrayList<T>();
 		queryCircle(position, radius, results);
 		return results;
 	}
 
-	ArrayList<QuadTreeData> circleDataQueryResults = new ArrayList<QuadTreeData>();
+	ArrayList<T> circleDataQueryResults = new ArrayList<T>();
 
-	public void queryCircle(PVector position, float radius, ArrayList<QuadTreeData> output) {
+	public void queryCircle(PVector position, float radius, ArrayList<T> output) {
 		output.clear();
 		circleDataQueryResults.clear();
 
@@ -56,7 +62,7 @@ public class QuadTree extends GsynlibBase {
 
 		float sqrRadius = radius * radius;
 
-		for (QuadTreeData d : circleDataQueryResults) {
+		for (T d : circleDataQueryResults) {
 			if (GApp.sqrDist(d.position, position) <= sqrRadius) {
 				output.add(d);
 			}
@@ -65,29 +71,28 @@ public class QuadTree extends GsynlibBase {
 		circleDataQueryResults.clear();
 	}
 
-	public ArrayList<QuadTreeData> queryBounds(Bounds b) {
-		ArrayList<QuadTreeData> results = new ArrayList<QuadTreeData>();
+	public ArrayList<T> queryBounds(Bounds b) {
+		ArrayList<T> results = new ArrayList<T>();
 		queryBounds(b, results);
 		return results;
 	}
 
-	public void queryBounds(Bounds b, ArrayList<QuadTreeData> output) {
+	public void queryBounds(Bounds b, ArrayList<T> output) {
 		output.clear();
 		root.queryData(b, output);
 	}
 
-	public void updatePosition(QuadTreeData d, PVector newPosition) {
+	public void updateData(T d) {
 		qtlock.lock();
 		try {
 			remove(d);
-			d.position.set(newPosition);
 			insert(d);
 		} finally {
 			qtlock.unlock();
 		}
 	}
 
-	public Boolean insert(QuadTreeData data) {
+	public Boolean insert(T data) {
 		Boolean insertSuccess = false;
 		if (data == null)
 			return false;
@@ -106,11 +111,17 @@ public class QuadTree extends GsynlibBase {
 		return insertSuccess;
 	}
 
-	public void remove(QuadTreeData d) {
+	public void remove(T d) {
 		qtlock.lock();
 		try {
-			QuadTreeNode dataNode = getNodeUnder(d.position);
-			dataNode.remove(d);
+			
+			QuadTreeNode<?> dataNode = d.node;	
+			
+			if(dataNode != null)
+				dataNode.remove(d);
+			else
+				println("couldn't find node containing data " + d.position);
+			
 		} finally {
 			qtlock.unlock();
 		}
@@ -124,7 +135,7 @@ public class QuadTree extends GsynlibBase {
 		return root.searchNN(position, excludeData);
 	}
 
-	public QuadTreeNode getNodeUnder(PVector position) {
+	public QuadTreeNode<T> getNodeUnder(PVector position) {
 		return root.getNodeUnder(position);
 	}
 
@@ -210,6 +221,8 @@ public class QuadTree extends GsynlibBase {
 	void resolveParentNodes(QuadTreeNode n, QuadTreeNode parent) {
 
 		n.parentNode = parent;
+		
+		n.tree = this;
 
 		if (!n.isLeaf()) {
 			resolveParentNodes(n.A, n);
@@ -229,11 +242,11 @@ public class QuadTree extends GsynlibBase {
 		this.resetVisited();
 	}
 
-	void renderNode(QuadTreeNode n) {
+	void renderNode(QuadTreeNode<T> n) {
 
 		app().stroke(200, 200);
 		app().strokeWeight(4);
-		for (QuadTreeData d : n.data) {
+		for (T d : n.data) {
 			app().point(d.position.x, d.position.y);
 		}
 		
