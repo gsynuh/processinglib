@@ -1,4 +1,6 @@
-ArrayList<QuadTreeData> boidNeighbors = new ArrayList<QuadTreeData>();
+ArrayList<QuadTreeData> queryResults = new ArrayList<QuadTreeData>();
+ArrayList<QuadTreeDataObject> boidNeighbors = new ArrayList<QuadTreeDataObject>();
+
 float maxSpeed = 2;
 float maxForce = 0.02;
 float desiredSep = 11;
@@ -6,8 +8,7 @@ PVector sep = new PVector();
 PVector ali = new PVector();
 PVector coh = new PVector();
 PVector positionDelta = new PVector();
-float neighborDist = 50;
-
+float neighborDist = 20;
 public class Boid {
 
   public QuadTreeData data;
@@ -16,9 +17,9 @@ public class Boid {
   public PVector acceleration = new PVector();
 
   public Boid() {
-    velocity.x = cos(random(-TWO_PI,TWO_PI));
-    velocity.y = sin(random(-TWO_PI,TWO_PI));
-    velocity.setMag(random(0.2,1) * maxSpeed);
+    velocity.x = cos(random(-TWO_PI, TWO_PI));
+    velocity.y = sin(random(-TWO_PI, TWO_PI));
+    velocity.setMag(random(0.2, 1) * maxSpeed);
   }
 
   public void applyForce(PVector force) {
@@ -26,10 +27,10 @@ public class Boid {
     acceleration.y += force.y;
   }
 
-  void align(PVector force, ArrayList<QuadTreeData> ns) {
+  void align(PVector force, ArrayList<QuadTreeDataObject> ns) {
     force.set(0, 0);
     float count = 0;
-    for (QuadTreeData d : ns) {
+    for (QuadTreeDataObject d : ns) {
       Boid b = (Boid)d.object;
       if (b != null) {
         force.x += b.velocity.x;
@@ -48,11 +49,11 @@ public class Boid {
     }
   }
 
-  void seperate(PVector force, ArrayList<QuadTreeData> ns) {
+  void seperate(PVector force, ArrayList<QuadTreeDataObject> ns) {
     force.set(0, 0);
     float count = 0;
 
-    for (QuadTreeData d : ns) {
+    for (QuadTreeDataObject d : ns) {
       Boid b = (Boid)d.object;
       if (b != null) {
         positionDelta.set(position);
@@ -79,7 +80,7 @@ public class Boid {
       force.limit(maxForce);
     }
   }
-  
+
   PVector seekP = new PVector();
   void seek(PVector force) {
     seekP.set(force);
@@ -90,12 +91,12 @@ public class Boid {
     force.limit(maxForce);
   }
 
-  void cohesion(PVector force, ArrayList<QuadTreeData> ns) {
+  void cohesion(PVector force, ArrayList<QuadTreeDataObject> ns) {
 
     float count = 0;
     force.set(0, 0);
 
-    for (QuadTreeData d : ns) {
+    for (QuadTreeDataObject d : ns) {
       Boid b = (Boid)d.object;
       positionDelta.set(position);
       positionDelta.sub(b.position);
@@ -116,7 +117,14 @@ public class Boid {
 
   public void update() {
     boidNeighbors.clear();
-    quadTree.queryCircle(position, neighborDist, boidNeighbors);
+    queryResults.clear();
+    quadTree.queryCircle(position, neighborDist, queryResults);
+
+    for (QuadTreeData d : queryResults) {
+      if (d instanceof QuadTreeDataObject) {
+        boidNeighbors.add((QuadTreeDataObject) d);
+      }
+    }
 
     //FLOCK LOGIC
 
@@ -124,7 +132,7 @@ public class Boid {
     align(ali, boidNeighbors);
     cohesion(coh, boidNeighbors);
 
-    sep.mult(1.5f);
+    sep.mult(2.5f);
     ali.mult(1.0f);
     coh.mult(1.0f);
 
@@ -136,8 +144,12 @@ public class Boid {
     velocity.add(acceleration);
     velocity.limit(maxSpeed);
     position.add(velocity);
-    acceleration.mult(0);
+    acceleration.mult(0.02);
 
+    doBounds();
+  }
+
+  void doBounds() {
     float r = 10;
 
     if (position.x < -r)

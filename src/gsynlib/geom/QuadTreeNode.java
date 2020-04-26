@@ -32,7 +32,6 @@ public class QuadTreeNode {
 	}
 
 	public ArrayList<QuadTreeData> data = new ArrayList<QuadTreeData>();
-	public int totalDataCount = 0;
 
 	public QuadTreeNode getNodeUnder(PVector pos) {
 		return getNodeUnder(this, pos);

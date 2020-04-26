@@ -21,13 +21,13 @@ void setup() {
   quadTree = new QuadTree(b);
 
 
-  for (int i = 0; i < 1200; i++) {
+  for (int i = 0; i < 500; i++) {
     PVector pos = new PVector(
       random(width), 
       random(height)
       );
     Boid b = new Boid();
-    QuadTreeData d = new QuadTreeData(pos, b);
+    QuadTreeDataObject d = new QuadTreeDataObject(pos, b);
 
     if (quadTree.insert(d)) {
       b.data = d;
@@ -37,10 +37,10 @@ void setup() {
   }
 }
 
-void mousePressed() {
+void mouseDragged() {
   PVector pos = new PVector(mouseX, mouseY);
   Boid b = new Boid();
-  QuadTreeData d = new QuadTreeData(pos, b);
+  QuadTreeDataObject d = new QuadTreeDataObject(pos, b);
 
   if (quadTree.insert(d)) {
     b.data = d;
@@ -61,5 +61,5 @@ void draw() {
     b.show();
   }
 
-  //quadTree.render();
+  quadTree.render();
 }

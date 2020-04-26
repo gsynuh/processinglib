@@ -9,41 +9,6 @@ float queryRadius = 50;
 QuadTreeData mouseData;
 
 ArrayList<Walker> walkers = new ArrayList<Walker>();
-class Walker {
-  QuadTreeData data;
-  PVector position = new PVector();
-  Boolean inCollision = false;
-
-  public void update() {
-    position.x += random(-1, 1);
-    position.y += random(-1, 1);
-    inCollision = false;
-
-    //This is not an appropriate way to test for collision
-    //rather, circle query check would be faster since all Walkers have the same size.
-    QuadTreeData nearestQTD = quadTree.getNearestData(position, data);
-    if (nearestQTD != null) {
-      float d = GApp.sqrDist(position, nearestQTD.position);
-      if (d <= 100) {
-        inCollision= true;
-      }
-    }
-  }
-
-  public void show() {
-    pushMatrix();
-    pushStyle();
-    noStroke();
-    if (inCollision) {
-      fill(255, 0, 0);
-    } else {
-      fill(0, 255, 0);
-    }
-    ellipse(position.x, position.y, 10, 10);
-    popStyle();
-    popMatrix();
-  }
-}
 
 void setup() {
   size(800, 800);
@@ -56,13 +21,13 @@ void setup() {
   quadTree = new QuadTree(b);
 
 
-  for (int i = 0; i < 500; i++) {
+  for (int i = 0; i < 1; i++) {
     PVector pos = new PVector(
       random(width), 
       random(height)
       );
     Walker w = new Walker();
-    QuadTreeData d = new QuadTreeData(pos, w);
+    QuadTreeDataObject d = new QuadTreeDataObject(pos, w);
 
     if (quadTree.insert(d)) {
       w.data = d;
@@ -72,10 +37,10 @@ void setup() {
   }
 }
 
-void mousePressed() {
-  PVector pos = new PVector(mouseX, mouseY);
+void mouseDragged() {
+  PVector pos = new PVector(mouseX + random(-20, 20), mouseY + random(-20, 20));
   Walker w = new Walker();
-  QuadTreeData d = new QuadTreeData(pos, w);
+  QuadTreeDataObject d = new QuadTreeDataObject(pos, w);
 
   if (quadTree.insert(d)) {
     w.data = d;
@@ -84,7 +49,7 @@ void mousePressed() {
   }
 }
 
-PVector pos = new PVector(0,0);
+PVector pos = new PVector(0, 0);
 void draw() {
   background(255);
 
@@ -92,9 +57,9 @@ void draw() {
     w.update();
     quadTree.updatePosition(w.data, w.position);
   }
-  
-  pos.set(mouseX,mouseY);
-  
+
+  pos.set(mouseX, mouseY);
+
   QuadTreeData closestData = quadTree.getNearestData(pos);
 
   quadTree.render();
