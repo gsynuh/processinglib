@@ -231,11 +231,12 @@ public class QuadTree extends GsynlibBase {
 
 	void renderNode(QuadTreeNode n) {
 
+		app().stroke(200, 200);
+		app().strokeWeight(4);
 		for (QuadTreeData d : n.data) {
 			app().point(d.position.x, d.position.y);
 		}
-
-		app().stroke(200, 200);
+		
 		app().strokeWeight(1);
 
 		if (n.id == 1)
