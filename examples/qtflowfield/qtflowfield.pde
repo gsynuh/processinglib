@@ -8,7 +8,7 @@ float rad = 150;
 ArrayList<Particle> particles = new ArrayList<Particle>();
 
 void setup() {
-  fullScreen(2);
+  fullScreen(FX2D,2);
   smooth(0);
 
   GApp.set(this);
@@ -164,7 +164,7 @@ void draw() {
     p.render();
   }
 
-  //drawText();
+  drawText();
 }
 
 void drawText() {
@@ -174,7 +174,7 @@ void drawText() {
   translate(0, height-30);
   rect(0, 0, 250, 30);
   fill(0);
-  text("particle count:" + particles.size() + " noise seed:" + seed, 5, 20);
+  text("seed:" + seed + "  particles:" + particles.size() + "  fps:" + round(frameRate), 5, 20);
   popStyle();
   popMatrix();
 }

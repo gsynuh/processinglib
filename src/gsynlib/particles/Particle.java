@@ -1,9 +1,9 @@
 package gsynlib.particles;
 
-import processing.core.PVector;
+import processing.core.*;
 import static processing.core.PApplet.*;
 
-import java.util.ArrayList;
+import java.util.*;
 
 import gsynlib.geom.QuadTreeDataVector;
 

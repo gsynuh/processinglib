@@ -13,10 +13,9 @@ public class QuadTree<T extends QuadTreeData> extends GsynlibBase {
 
 	QuadTreeNode<T> root;
 	ReentrantLock qtlock = new ReentrantLock();
-	
-	
-	//HELPER LISTS
-	public 	ArrayList<T> NNCandidates = new ArrayList<T>();
+
+	// HELPER LISTS
+	public ArrayList<T> NNCandidates = new ArrayList<T>();
 	public ArrayList<QuadTreeNode> QNCandidates = new ArrayList<QuadTreeNode>();
 
 	public QuadTreeNode<T> getRoot() {
@@ -114,25 +113,25 @@ public class QuadTree<T extends QuadTreeData> extends GsynlibBase {
 	public void remove(T d) {
 		qtlock.lock();
 		try {
-			
-			QuadTreeNode<?> dataNode = d.node;	
-			
-			if(dataNode != null)
+
+			QuadTreeNode<?> dataNode = d.node;
+
+			if (dataNode != null)
 				dataNode.remove(d);
 			else
 				println("couldn't find node containing data " + d.position);
-			
+
 		} finally {
 			qtlock.unlock();
 		}
 	}
-	
+
 	public void clear() {
-		//RECURSIVELY GET ALL ROOT DATA AND REMOVE AS WE USUALLY WOULD.
-		//BRUTEFORCE VERSION TO MAKE SURE CLEANUP IS DONE RIGHT, BUT SLOW.
+		// RECURSIVELY GET ALL ROOT DATA AND REMOVE AS WE USUALLY WOULD.
+		// BRUTEFORCE VERSION TO MAKE SURE CLEANUP IS DONE RIGHT, BUT SLOW.
 		ArrayList<T> output = new ArrayList<T>();
 		root.getAllData(output);
-		for(T d : output) {
+		for (T d : output) {
 			this.remove(d);
 		}
 	}
@@ -231,7 +230,7 @@ public class QuadTree<T extends QuadTreeData> extends GsynlibBase {
 	void resolveParentNodes(QuadTreeNode n, QuadTreeNode parent) {
 
 		n.parentNode = parent;
-		
+
 		n.tree = this;
 
 		if (!n.isLeaf()) {
@@ -242,6 +241,12 @@ public class QuadTree<T extends QuadTreeData> extends GsynlibBase {
 		}
 
 	}
+
+	public Boolean debugDrawData = true;
+	public Boolean debugDrawNodes = true;
+	public Boolean debugDrawVectors = true;
+	public Boolean debugDrawVisited = true;
+	public float debugVectorScale = 1f;
 
 	public void render() {
 		app().pushMatrix();
@@ -254,22 +259,40 @@ public class QuadTree<T extends QuadTreeData> extends GsynlibBase {
 
 	void renderNode(QuadTreeNode<T> n) {
 
-		app().stroke(200, 200);
-		app().strokeWeight(4);
+		app().stroke(255, 0, 0, 200);
 		for (T d : n.data) {
-			app().point(d.position.x, d.position.y);
-		}
-		
-		app().strokeWeight(1);
 
-		if (n.id == 1)
-			app().fill(255, 0, 0, 30);
-		else if (n.id == 2)
-			app().fill(0, 0, 255, 30);
-		else
+			if (debugDrawVectors) {
+				app().strokeWeight(1);
+				if (d instanceof QuadTreeDataVector) {
+					QuadTreeDataVector v = (QuadTreeDataVector) d;
+					app().line(v.position.x, v.position.y, v.position.x + v.vector.x * debugVectorScale,
+							v.position.y + v.vector.y * debugVectorScale);
+				}
+			}
+
+			if (debugDrawData) {
+				app().strokeWeight(4);
+				app().point(d.position.x, d.position.y);
+			}
+
+		}
+
+		app().stroke(200, 200);
+
+		if (debugDrawNodes) {
+			app().strokeWeight(1);
 			app().noFill();
 
-		app().rect(n.bounds.position.x, n.bounds.position.y, n.bounds.size.x, n.bounds.size.y);
+			if (debugDrawVisited) {
+				if (n.id == 1)
+					app().fill(255, 0, 0, 30);
+				else if (n.id == 2)
+					app().fill(0, 0, 255, 30);
+			}
+
+			app().rect(n.bounds.position.x, n.bounds.position.y, n.bounds.size.x, n.bounds.size.y);
+		}
 
 		if (!n.isLeaf()) {
 			renderNode(n.A);
