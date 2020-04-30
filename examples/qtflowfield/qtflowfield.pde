@@ -8,7 +8,7 @@ float rad = 150;
 ArrayList<Particle> particles = new ArrayList<Particle>();
 
 void setup() {
-  fullScreen(FX2D,2);
+  fullScreen(FX2D, 2);
   smooth(0);
 
   GApp.set(this);
@@ -22,6 +22,11 @@ void setup() {
 void init() {
 
   quadTree = new QuadTree(b);
+  quadTree.debugDrawNodes = false;
+  quadTree.debugDrawVisited = false;
+  quadTree.debugDrawVectors = false;
+  quadTree.debugDrawData = false;
+  quadTree.debugVectorScale = 10;
 
   seed = round(random(0, 99999));
 
@@ -124,16 +129,16 @@ void addParticlesAt(float x, float y, int count) {
 
 void doSpawn() {
   if (particles.size() < 1000) {
-    float posX = width/2;
-    float posY = height/2;
+    float d = 120f;
+    for (float i = 0; i < d; i++) {
+      float posX = width/2;
+      float posY = height/2;
+      float a = i/d * TWO_PI + (frameCount/PI);
+      posX += cos(a) * (rad*2.8);
+      posY += sin(a) * (rad*2.8);
 
-    float time = (frameCount/60f);
-    float t = time*20;
-    float a = t*TWO_PI + time*0.2;
-    posX += cos(a) * (rad);
-    posY += sin(a) * (rad);
-
-    addParticlesAt(posX, posY, 1);
+      addParticlesAt(posX, posY, 1);
+    }
   }
 }
 
@@ -145,7 +150,7 @@ void draw() {
   if (frameCount % 4 == 0)
     rect(0, 0, width, height);
 
-  //doSpawn();
+  doSpawn();
 
   pushMatrix();
   stroke(255);
@@ -154,7 +159,7 @@ void draw() {
   ellipse(0, 0, rad*2, rad*2);
   popMatrix();
 
-  //quadTree.render();
+  quadTree.render();
 
   for (Particle p : particles) {
     p.update();

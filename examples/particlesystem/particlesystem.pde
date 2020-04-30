@@ -48,6 +48,10 @@ void setup() {
   simulate();
 }
 
+void simulate() {
+  ps.Simulate(0.01);
+}
+
 void createForces() {
   noiseSeed(round(random(99999)));
 
@@ -76,19 +80,9 @@ void createForces() {
   }
 }
 
-void simulate() {
-  background(255);
-  ps.Play();
-
-  while (ps.getLiveParticleCount() > 0) {
-    ps.update(0.01);
-  }
-}
-
 Boolean drawPoints = false;
 
 void keyPressed() {
-  frameCount = 0;
 
   if (keyCode == ENTER)
     createForces();
@@ -100,8 +94,8 @@ void keyPressed() {
 
   if (keyCode == 32)
     drawPoints = !drawPoints;
-
-  simulate();
+    
+    simulate();
 }
 
 
@@ -121,11 +115,7 @@ void draw() {
   for (Entry<Particle, CachedParticle> kvp : c.entrySet()) {
     CachedParticle cp = kvp.getValue();
     beginShape();
-    int ct = 1;
     for (PVector p : cp.points) {
-
-      if (ct % frameCount == 0)
-        continue;
 
       if (drawPoints)
         point(p.x, p.y);
@@ -133,7 +123,6 @@ void draw() {
         vertex(p.x, p.y);
 
       cachePointCount++;
-      ct++;
     }
 
     endShape();

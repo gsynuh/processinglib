@@ -247,6 +247,7 @@ public class QuadTree<T extends QuadTreeData> extends GsynlibBase {
 	public Boolean debugDrawVectors = true;
 	public Boolean debugDrawVisited = true;
 	public float debugVectorScale = 1f;
+	public float debugLineScale = 1f;
 
 	public void render() {
 		app().pushMatrix();
@@ -263,7 +264,7 @@ public class QuadTree<T extends QuadTreeData> extends GsynlibBase {
 		for (T d : n.data) {
 
 			if (debugDrawVectors) {
-				app().strokeWeight(1);
+				app().strokeWeight(debugLineScale);
 				if (d instanceof QuadTreeDataVector) {
 					QuadTreeDataVector v = (QuadTreeDataVector) d;
 					app().line(v.position.x, v.position.y, v.position.x + v.vector.x * debugVectorScale,
@@ -272,7 +273,7 @@ public class QuadTree<T extends QuadTreeData> extends GsynlibBase {
 			}
 
 			if (debugDrawData) {
-				app().strokeWeight(4);
+				app().strokeWeight(debugLineScale * 4);
 				app().point(d.position.x, d.position.y);
 			}
 
@@ -281,7 +282,7 @@ public class QuadTree<T extends QuadTreeData> extends GsynlibBase {
 		app().stroke(200, 200);
 
 		if (debugDrawNodes) {
-			app().strokeWeight(1);
+			app().strokeWeight(debugLineScale);
 			app().noFill();
 
 			if (debugDrawVisited) {

@@ -60,6 +60,31 @@ public class ParticleSystem {
 			cache.clearPoints();
 		}
 	}
+	
+	
+	public float maxSimulationLifeTime = 10f;
+	public void Simulate(float step) {
+		Reset();
+		lastUpdateTime = System.currentTimeMillis();
+		
+		float maxTime = 0f;
+		for(int i = 0; i < particles.size(); i++) {
+			Particle p = particles.get(i);
+			if(p.lifetime > maxTime) {
+				maxTime = p.lifetime;
+			}
+		}
+		
+		if(maxTime > maxSimulationLifeTime) {
+			PApplet.println("At least one particle's lifetime is above accepted limit of " + maxSimulationLifeTime);
+			PApplet.println("use ParticleSystem.maxSimulationLifeTime to increase this time.");
+			return;
+		}
+		
+		while(this.getLiveParticleCount() > 0) {
+			this.update(step);
+		}
+	}
 
 	long lastUpdateTime = 0;
 

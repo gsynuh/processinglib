@@ -19,6 +19,10 @@ public class ParticlesCache {
 		return cachedParticles;
 	}
 	
+	public CachedParticle getParticleCache(Particle p) {
+		return cachedParticles.get(p);
+	}
+	
 	public void clearParticles() {
 		cachedParticles.clear();
 	}

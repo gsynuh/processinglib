@@ -120,7 +120,7 @@ public class Particle {
     pushStyle();
     
     colorMode(HSB);
-    int h = ceil(map(vel.heading(), -PI, PI, 0,255));
+    int h = (ceil(map(vel.heading(), -PI, PI, 0,255))+128 + frameCount) % 255;
 
     stroke(h,255,255);
     strokeWeight(size);

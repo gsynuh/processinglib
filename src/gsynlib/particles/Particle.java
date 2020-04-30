@@ -14,6 +14,8 @@ public class Particle {
 	public float currentTime = 0f;
 	public Boolean live = true;
 	
+	public float range = 50f;
+	
 	public PVector position = new PVector();
 	public PVector velocity = new PVector();
 	public PVector acceleration = new PVector();
@@ -56,7 +58,7 @@ public class Particle {
 	PVector f = new PVector();
 	public void doForces() {
 		queryResults.clear();
-		ps.forceField.queryCircle(this.position, 50, queryResults);
+		ps.forceField.queryCircle(this.position, range, queryResults);
 		
 		f.set(0,0);
 		float c = 0f;

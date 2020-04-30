@@ -35,6 +35,10 @@ public class PlotterCanvas extends GsynlibBase {
 	
 	//PARTICLES
 	ParticleSystem particleSystem;
+	
+	public ParticleSystem getParticleSystem() {
+		return particleSystem;
+	}
 
 	public Bounds getBounds() {
 		return this.bounds;
@@ -80,8 +84,15 @@ public class PlotterCanvas extends GsynlibBase {
 
 	public void prepare() {
 
+		if(this.particleSystem == null)
+			this.particleSystem = new ParticleSystem(this.bounds);
+		
 		this.clear();
 
+		this.particleSystem.cache.enabled = true;
+		this.particleSystem.cache.clearParticles();
+		this.particleSystem.cache.clearPoints();
+		
 		try {
 			if (externalPrepareMethodA != null) {
 				externalPrepareMethodA.invoke(app(), this);
@@ -94,8 +105,6 @@ public class PlotterCanvas extends GsynlibBase {
 			println("Couldn't call prepareXY on", app());
 			e.printStackTrace();
 		}
-		
-		this.particleSystem = new ParticleSystem(this.bounds);
 
 		for (PlotterCommand c : commands) {
 			if (c instanceof DrawCommand) {
@@ -131,6 +140,8 @@ public class PlotterCanvas extends GsynlibBase {
 			}
 		}
 		
+		this.particleSystem.Simulate(0.016f);
+		
 		BakeTransformStack.reset();
 		for (int i = 0; i < commands.size(); i++) {
 			PlotterCommand c = commands.get(i);
@@ -153,8 +164,36 @@ public class PlotterCanvas extends GsynlibBase {
 		prepared = false;
 	}
 	
+	public void force(PVector point, PVector vec) {
+		this.particleSystem.addForce(point,vec);
+	}
+	
 	public Particle particle(PVector pos, float lifeTime) {
-		return this.particleSystem.createParticle(pos,lifeTime);
+		
+		class ParticleDC extends DrawCommand {
+			ParticleSystem ps;
+			Particle p;
+			public ParticleDC(PlotterCanvas pc, ParticleSystem _ps, Particle _p) {
+				super(pc);
+				this.ps = _ps;
+				this.p = _p;
+			}
+			
+			@Override
+			public void bakePoints() {
+				CachedParticle pc = this.ps.cache.getParticleCache(this.p);
+				for(PVector p : pc.points) {
+					PVector p1 = TransformPoint(p.copy());
+					bakedPoints.add(p1);
+				}
+			}
+		}
+		
+		Particle p = this.particleSystem.createParticle(pos,lifeTime);
+		
+		ParticleDC pdc = new ParticleDC(this,this.particleSystem,p);
+		commands.add(pdc);
+		return p;
 	}
 
 	public void image(PImage im, float x, float y, float w, float h) {
@@ -588,6 +627,8 @@ public class PlotterCanvas extends GsynlibBase {
 
 	public int backgroundColor = 0x00FFFFFF;
 	public int canvasColor = 0xFFFFFFFF;
+	
+	public Boolean drawParticleSystem = false;
 
 	public void draw() {
 
@@ -608,11 +649,20 @@ public class PlotterCanvas extends GsynlibBase {
 		app().translate(-bounds.size.x / 2, -bounds.size.y / 2);
 
 		drawBounds();
+		if(drawParticleSystem)
+			drawParticles();
 		drawCommands();
 		drawCursor(s);
 
 		app().popMatrix();
 		app().popStyle();
+	}
+	
+	void drawParticles() {
+		this.particleSystem.forceField.debugLineScale = screenScale;
+		this.particleSystem.forceField.debugDrawVectors = true;
+		this.particleSystem.forceField.debugDrawVisited = false;
+		this.particleSystem.forceField.render();
 	}
 
 	void drawCommands() {
