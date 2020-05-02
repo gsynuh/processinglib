@@ -16,7 +16,7 @@ public class PoissonSampler extends GsynlibBase {
 	float minDistance = 10;
 	float cellSize = 0;
 	
-	public int maxSearchIterations = 100;
+	public int maxSearchIterations = 32;
 
 	ArrayList<PVector> points;
 	
@@ -27,7 +27,6 @@ public class PoissonSampler extends GsynlibBase {
 
 
 	public PoissonSampler() {
-
 		bounds = new Bounds();
 		points = new ArrayList<PVector>();
 	}
@@ -36,7 +35,6 @@ public class PoissonSampler extends GsynlibBase {
 		bounds.set(_x, _y,_w,_h);
 		this.minDistance = minDistance;
 		this.cellSize = this.minDistance / sqrt(2);
-		println("PoissonSampler minDist",minDistance,"cellSize",cellSize,"bounds",bounds);
 		build();
 	}
 	
@@ -59,15 +57,14 @@ public class PoissonSampler extends GsynlibBase {
 	}
 	
 	
-	PVector createCandidate(PVector center) {
+	void createCandidate(PVector center,PVector candidate) {
+
 		float a = app().random(0,TWO_PI);
 		float d = app().random(this.minDistance,this.minDistance * 2);
-		PVector p = new PVector();
-		p.set(center);
+		candidate.set(center);
 		
-		p.x += cos(a)*d;
-		p.y += sin(a)*d;
-		return p;
+		candidate.x += cos(a)*d;
+		candidate.y += sin(a)*d;
 	}
 	
 	int cellX(float x) {return floor(x / cellSize);}
@@ -108,22 +105,20 @@ public class PoissonSampler extends GsynlibBase {
 		
 		return true;
 	}
-
+	
+	PVector candidate = new PVector();
+	ArrayList<PVector> spawnPoints = new ArrayList<PVector>();
+	
 	void build() {
 		points.clear();
+		spawnPoints.clear();
 		
-		float boundSize = bounds.size.x < bounds.size.y ? bounds.size.x : bounds.size.y;
-		
-		int gridSize = ceil(boundSize / this.cellSize);
-		
-		println("PoissonSampler gridSize",gridSize,boundSize);
-		
+		float boundSize = bounds.size.x < bounds.size.y ? bounds.size.x : bounds.size.y;	
+		int gridSize = ceil(boundSize / this.cellSize);	
 		float sqrdMinDist = this.minDistance * this.minDistance;
 		int[][] grid = new int[gridSize][gridSize];
 		
-		ArrayList<PVector> spawnPoints = new ArrayList<PVector>();
-		spawnPoints.add(new PVector(0, 0));
-		
+		spawnPoints.add(bounds.center.copy());
 		
 		while(spawnPoints.size()>0) {
 			
@@ -133,13 +128,17 @@ public class PoissonSampler extends GsynlibBase {
 			Boolean candidateAccepted = false;
 			
 			for(int i = 0; i < maxSearchIterations; i++) {
-				PVector candidate = createCandidate(sp);
+				
+				createCandidate(sp,candidate);
 				
 				if(isPointValid(candidate,grid,gridSize,sqrdMinDist)) {
-					points.add(candidate);
-					spawnPoints.add(candidate);
+					
+					points.add(candidate.copy());
+					spawnPoints.add(candidate.copy());
+					
 					int x = cellX(candidate.x);
 					int y = cellY(candidate.y);
+					
 					grid[cellX(candidate.x)][cellY(candidate.y)] = points.size();
 					candidateAccepted = true;
 					break;
