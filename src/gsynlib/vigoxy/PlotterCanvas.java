@@ -11,6 +11,7 @@ import gsynlib.geom.*;
 import gsynlib.image.*;
 import gsynlib.particles.*;
 import gsynlib.scheduling.*;
+import gsynlib.utils.*;
 import processing.core.*;
 import static processing.core.PApplet.*;
 
@@ -28,14 +29,14 @@ public class PlotterCanvas extends GsynlibBase {
 
 	Bounds bounds = new Bounds();
 	Bounds drawBounds = new Bounds();
-	
+
 	// REFLECTION (get PApplet prepare method if it exists)
 	Method externalPrepareMethodA;
 	Method externalPrepareMethodB;
-	
-	//PARTICLES
+
+	// PARTICLES
 	ParticleSystem particleSystem;
-	
+
 	public ParticleSystem getParticleSystem() {
 		return particleSystem;
 	}
@@ -47,7 +48,6 @@ public class PlotterCanvas extends GsynlibBase {
 	public PVector getRandomPointOnCanvas() {
 		return this.bounds.getRandom();
 	}
-
 
 	public PlotterCanvas(PlotterXY pxy) {
 		this.plotter = pxy;
@@ -84,15 +84,15 @@ public class PlotterCanvas extends GsynlibBase {
 
 	public void prepare() {
 
-		if(this.particleSystem == null)
+		if (this.particleSystem == null)
 			this.particleSystem = new ParticleSystem(this.bounds);
-		
+
 		this.clear();
 
 		this.particleSystem.cache.enabled = true;
 		this.particleSystem.cache.clearParticles();
 		this.particleSystem.cache.clearPoints();
-		
+
 		try {
 			if (externalPrepareMethodA != null) {
 				externalPrepareMethodA.invoke(app(), this);
@@ -112,15 +112,14 @@ public class PlotterCanvas extends GsynlibBase {
 				dc.prepare();
 			}
 		}
-		
 
 		prepared = true;
 	}
 
-	//------------------- BAKE DRAWING --------------------
-	
+	// ------------------- BAKE DRAWING --------------------
+
 	TransformStack BakeTransformStack = new TransformStack();
-	
+
 	public void bake() {
 
 		if (!prepared) {
@@ -139,10 +138,11 @@ public class PlotterCanvas extends GsynlibBase {
 				dc.reset();
 			}
 		}
-		
+
 		this.particleSystem.Simulate(0.016f);
-		
+
 		BakeTransformStack.reset();
+		BakeTransformStack.pushMatrix();
 		for (int i = 0; i < commands.size(); i++) {
 			PlotterCommand c = commands.get(i);
 			if (c instanceof DrawCommand) {
@@ -153,6 +153,7 @@ public class PlotterCanvas extends GsynlibBase {
 				tc.ApplyCommandToTStack(BakeTransformStack);
 			}
 		}
+		BakeTransformStack.popMatrix();
 	}
 
 //------------------- DRAW COMMANDS --------------------
@@ -163,35 +164,36 @@ public class PlotterCanvas extends GsynlibBase {
 		commands.clear();
 		prepared = false;
 	}
-	
+
 	public void force(PVector point, PVector vec) {
-		this.particleSystem.addForce(point,vec);
+		this.particleSystem.addForce(point, vec);
 	}
-	
+
 	public Particle particle(PVector pos, float lifeTime) {
-		
+
 		class ParticleDC extends DrawCommand {
 			ParticleSystem ps;
 			Particle p;
+
 			public ParticleDC(PlotterCanvas pc, ParticleSystem _ps, Particle _p) {
 				super(pc);
 				this.ps = _ps;
 				this.p = _p;
 			}
-			
+
 			@Override
 			public void bakePoints() {
 				CachedParticle pc = this.ps.cache.getParticleCache(this.p);
-				for(PVector p : pc.points) {
+				for (PVector p : pc.points) {
 					PVector p1 = TransformPoint(p.copy());
 					bakedPoints.add(p1);
 				}
 			}
 		}
-		
-		Particle p = this.particleSystem.createParticle(pos,lifeTime);
-		
-		ParticleDC pdc = new ParticleDC(this,this.particleSystem,p);
+
+		Particle p = this.particleSystem.createParticle(pos, lifeTime);
+
+		ParticleDC pdc = new ParticleDC(this, this.particleSystem, p);
 		commands.add(pdc);
 		return p;
 	}
@@ -377,6 +379,29 @@ public class PlotterCanvas extends GsynlibBase {
 		commands.add(circledc);
 	}
 
+	public void formula(Formula formula) {
+		class FormulaDC extends DrawCommand {
+			Formula f;
+			public FormulaDC(PlotterCanvas pc,Formula f) {
+				super(pc);
+				this.f = f;
+			}
+			
+			@Override
+			public void bakePoints() {
+				for(float i = 0; i <= f.numSamples; i++) {
+					float t = i/f.numSamples;
+					PVector p = f.evaluate(t);
+					p.y = constrain(p.y,f.bounds.position.y,f.bounds.position.y + f.bounds.size.y);
+					bakedPoints.add(TransformPoint(p));
+				}
+			}
+		}
+
+		FormulaDC formulaDC = new FormulaDC(this, formula);
+		commands.add(formulaDC);
+	}
+
 	DrawCommand pendingCommand;
 
 	public void beginShape() {
@@ -408,7 +433,7 @@ public class PlotterCanvas extends GsynlibBase {
 		tc.name += "pushMatrix";
 		this.commands.add(tc);
 	}
-	
+
 	public void popMatrix() {
 		TransformCommand tc = new TransformCommand();
 		tc.type = TransformCommand.TXTYPE.POP;
@@ -627,7 +652,7 @@ public class PlotterCanvas extends GsynlibBase {
 
 	public int backgroundColor = 0x00FFFFFF;
 	public int canvasColor = 0xFFFFFFFF;
-	
+
 	public Boolean drawParticleSystem = false;
 
 	public void draw() {
@@ -649,7 +674,7 @@ public class PlotterCanvas extends GsynlibBase {
 		app().translate(-bounds.size.x / 2, -bounds.size.y / 2);
 
 		drawBounds();
-		if(drawParticleSystem)
+		if (drawParticleSystem)
 			drawParticles();
 		drawCommands();
 		drawCursor(s);
@@ -657,7 +682,7 @@ public class PlotterCanvas extends GsynlibBase {
 		app().popMatrix();
 		app().popStyle();
 	}
-	
+
 	void drawParticles() {
 		this.particleSystem.forceField.debugLineScale = screenScale;
 		this.particleSystem.forceField.debugDrawVectors = true;

@@ -66,7 +66,9 @@ void prepareXY(PlotterCanvas c) {
     c.setDrawBounds(new Bounds(0, 150, width, height-255));
   
   //new Drawing1(c);
-  new Drawing2(c);
+  //new Drawing2(c);
+  //new Drawing3(c);
+  new Drawing4(c);
 }
 
 void draw() {
