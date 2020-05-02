@@ -1,5 +1,7 @@
 package gsynlib.geom;
 import gsynlib.base.*;
+import gsynlib.utils.GApp;
+
 import java.util.*;
 import processing.core.*;
 import static processing.core.PApplet.*;
@@ -11,25 +13,30 @@ import static processing.core.PApplet.*;
 public class PoissonSampler extends GsynlibBase {
 
 	Bounds bounds;
-	float gridSize = 10;
+	float minDistance = 10;
+	float cellSize = 0;
+	
+	public int maxSearchIterations = 100;
 
 	ArrayList<PVector> points;
-	ArrayList<Boolean> pointsTaken;
-
-	ArrayList<PVector> searchBuffer;
+	
+	
+	public ArrayList<PVector> getAllPoints() {
+		return points;
+	}
 
 
 	public PoissonSampler() {
 
 		bounds = new Bounds();
 		points = new ArrayList<PVector>();
-		pointsTaken = new ArrayList<Boolean>();
-		searchBuffer = new ArrayList<PVector>();
 	}
 
-	public void init(float _gridSize, float _x, float _y, float _w, float _h) {
+	public void init(float minDistance, float _x, float _y, float _w, float _h) {
 		bounds.set(_x, _y,_w,_h);
-		this.gridSize = _gridSize;
+		this.minDistance = minDistance;
+		this.cellSize = this.minDistance / sqrt(2);
+		println("PoissonSampler minDist",minDistance,"cellSize",cellSize,"bounds",bounds);
 		build();
 	}
 	
@@ -46,38 +53,112 @@ public class PoissonSampler extends GsynlibBase {
 			p.y *= s.y;
 		}
 	}
+	
+	public PVector getRandomPoint() {
+		return points.get(floor(app().random(points.size())));
+	}
+	
+	
+	PVector createCandidate(PVector center) {
+		float a = app().random(0,TWO_PI);
+		float d = app().random(this.minDistance,this.minDistance * 2);
+		PVector p = new PVector();
+		p.set(center);
+		
+		p.x += cos(a)*d;
+		p.y += sin(a)*d;
+		return p;
+	}
+	
+	int cellX(float x) {return floor(x / cellSize);}
+	int cellY(float y) {return floor(y / cellSize);}
+	int[][] grid;
+	float sqrdMinDist;
+	int gridSize;
+	
+	Boolean isPointValid(PVector p) {
+				
+		if(p.x < 0 || p.x > bounds.size.x || p.y < 0 || p.y > bounds.size.y)
+			return false;
+		
+		int gridX = cellX(p.x);
+		int gridY = cellY(p.y);
+		
+		int searchXa = max(0,gridX - 2);
+		int searchXb = min(gridSize,gridX + 2);
+		int searchYa = max(0,gridY - 2);
+		int searchYb = min(gridSize,gridY + 2);
+		
+		
+		for(int x = searchXa; x < searchXb; x++) {
+			for(int y = searchYa; y < searchYb; y++) {
+				
+				
+				int pointIndex = grid[x][y]-1;
+				
+				if(pointIndex < 0)
+					continue;
+				
+				PVector n = points.get(pointIndex);
+
+				float sd = GApp.sqrDist(n, p);
+				
+					if(sd < sqrdMinDist)
+						return false;
+				
+			}
+		}
+		
+		return true;
+	}
 
 	void build() {
 		points.clear();
-		pointsTaken.clear();
 		
 		float boundSize = bounds.size.x < bounds.size.y ? bounds.size.x : bounds.size.y;
 		
-		float divSize = boundSize / this.gridSize;
-
-		for (int gridX = 0; gridX < this.gridSize; gridX++) {
-			for (int gridY = 0; gridY < this.gridSize; gridY++) {
-
-				PVector pos = new PVector(gridX * divSize, gridY * divSize);
+		gridSize = ceil(boundSize / this.cellSize);
+		
+		println("PoissonSampler gridSize",gridSize,boundSize);
+		
+		sqrdMinDist = this.minDistance * this.minDistance;
+		grid = new int[gridSize][gridSize];
+		
+		ArrayList<PVector> spawnPoints = new ArrayList<PVector>();
+		spawnPoints.add(new PVector(0, 0));
+		
+		
+		while(spawnPoints.size()>0) {
+			
+			int spawnIndex = floor(app().random(spawnPoints.size()));
+			PVector sp = spawnPoints.get(spawnIndex);
+			
+			Boolean candidateAccepted = false;
+			
+			for(int i = 0; i < maxSearchIterations; i++) {
+				PVector candidate = createCandidate(sp);
 				
-				pos.x += bounds.position.x;
-				pos.y += bounds.position.y;
-
-				pos.x += divSize / 2;
-				pos.y += divSize / 2;
-
-				pos.x += app().random(-divSize / 8, divSize / 8);
-				pos.y += app().random(-divSize / 8, divSize / 8);
-
-				points.add(pos);
-				pointsTaken.add(false);
+				if(isPointValid(candidate)) {
+					points.add(candidate);
+					spawnPoints.add(candidate);
+					int x = cellX(candidate.x);
+					int y = cellY(candidate.y);
+					grid[cellX(candidate.x)][cellY(candidate.y)] = points.size();
+					candidateAccepted = true;
+					break;
+				}
 			}
+			
+			if(!candidateAccepted) {
+				spawnPoints.remove(spawnIndex);
+			}
+			
 		}
+		
+		translatePoints(bounds.position);
+		grid = null;
 	}
 
-	Boolean IsPointIndexTaken(int index) {
-		return pointsTaken.get(index);
-	}
 
 	int GetPointIndex(PVector p) {
 		for (int i = 0; i < points.size(); i++) {
@@ -88,80 +169,22 @@ public class PoissonSampler extends GsynlibBase {
 		return 0;
 	}
 
-	Boolean AllPointsTaken() {
-		Boolean r = true;
-		for (Boolean b : pointsTaken) {
-			r = b && r;
-		}
-
-		return r;
-	}
-
-	public PVector getPointNeighboor(PVector n1, float searchRadius) {
-		PVector foundPoint = null;
-		searchBuffer.clear();
-
-		for (int i = 0; i < points.size(); i++) {
-			if (IsPointIndexTaken(i)) {
-				continue;
-			}
-			PVector n2 = points.get(i);
-			if (n1 == n2)
-				continue;
-
-			float dist = PVector.dist(n1, n2);
-			if (dist <= searchRadius) {
-				searchBuffer.add(n2);
-			}
-		}
-
-		if (searchBuffer.size() == 0) {
-			foundPoint = points.get(floor(app().random(0, points.size())));
-			return foundPoint;
-		}
-
-		do {
-			int index = floor(app().random(0, searchBuffer.size()));
-			PVector p = searchBuffer.get(index);
-			foundPoint = p;
-		} while (foundPoint == null);
-
-		pointsTaken.set(GetPointIndex(foundPoint), true);
-		return foundPoint.copy();
-	}
-
-	public PVector getPoint() {
-
-		PVector foundPoint = null;
-
-		do {
-
-			if (AllPointsTaken()) {
-				foundPoint = points.get(floor(app().random(points.size())));
-			} else {
-
-				int index = floor(app().random(0, points.size()));
-
-				if (!IsPointIndexTaken(index)) {
-					PVector p = points.get(index);
-					pointsTaken.set(index, true);
-					foundPoint = p;
-				}
-			}
-		} while (foundPoint == null);
-
-		pointsTaken.set(GetPointIndex(foundPoint), true);
-		return foundPoint.copy();
-	}
-
 	public void renderDebug() {
+		
+		app().pushStyle();
+		//app().stroke(100);
+		//app().strokeWeight(1);
+		//app().rect(bounds.position.x,bounds.position.y,bounds.size.x,bounds.size.y);
+		
 		app().noStroke();
+		
+		if(points.size() > 0)
 		for (int i = 0; i < points.size(); i++) {
 			PVector p = points.get(i);
-			Boolean taken = pointsTaken.get(i);
-			app().fill(taken ? 220 : 130);
-			float r = taken ? 10 : 4;
+			app().fill(130);
+			float r = 4;
 			app().ellipse(p.x, p.y, r, r);
 		}
+		app().popStyle();
 	}
 }

@@ -42,6 +42,20 @@ public class BezierLoop extends GsynlibBase {
 	void setDefaultTargetBounds() {
 		targetBounds.set(0,0,app().width,app().height);
 	}
+	
+	
+	ArrayList<PVector> poissonPoints = new ArrayList<PVector>();
+	
+	PVector getRandom() {
+		int index = getRandomPoissonPointIndex();
+		PVector p = poissonPoints.get(index);
+		poissonPoints.remove(p);
+		return p;
+	}
+	
+	int getRandomPoissonPointIndex() {
+		return floor(app().random(poissonPoints.size()));
+	}
 
 	public void init(float numCurves, float _m) {
 
@@ -51,26 +65,33 @@ public class BezierLoop extends GsynlibBase {
 		
 		this.m = _m;
 		
-		println("BezierLoop init numCruves:",numCurves);
 		
 		curves.clear();
 		points.clear();
+		poissonPoints.clear();
 
 		float maxDist = this.targetBounds.size.x > this.targetBounds.size.y ? this.targetBounds.size.y : this.targetBounds.size.x;
 		
 		float minTangentDistance = maxDist * 0.8f;
 		float maxTangentDistance = maxDist * 1.2f;
 		
-		float numPointsNeededPerCurve = numCurves * 2 + 1;
+		float numPointsNeededPerCurve = (numCurves+1) * 2 + 1;
 		
-		poisson.init(numPointsNeededPerCurve, 
+		float minDistance = ceil(this.targetBounds.size.x / sqrt(numPointsNeededPerCurve));
+
+		
+		poisson.init(minDistance, 
 				this.targetBounds.position.x - maxDist, 
 				this.targetBounds.position.y - maxDist,
 				this.targetBounds.size.x + maxDist*2,
 				this.targetBounds.size.y + maxDist*2);
+		
+		
+		
+		poissonPoints.addAll(poisson.getAllPoints());
 
-		PVector p1 = poisson.getPoint();
-		PVector tangentTarget = poisson.getPointNeighboor(p1, maxTangentDistance);
+		PVector p1 = getRandom();
+		PVector tangentTarget = getRandom();
 
 		float tanAngle = tangentTarget.sub(p1).heading() - PI;
 		float tanRadius = app().random(minTangentDistance, maxTangentDistance * 2);
@@ -79,11 +100,11 @@ public class BezierLoop extends GsynlibBase {
 
 			CurveSegment cs = new CurveSegment(i);
 
-			PVector p4 = poisson.getPoint();
+			PVector p4 = getRandom();
 
 			cs.initialize(p1, p4);
 
-			tangentTarget = poisson.getPointNeighboor(p4, maxTangentDistance * 2);
+			tangentTarget = getRandom();
 			float a = tangentTarget.sub(p4).heading() - PI;
 
 			cs.setTrangent(0, tanAngle, tanRadius); // ALIGN WITH PREVIOUS
