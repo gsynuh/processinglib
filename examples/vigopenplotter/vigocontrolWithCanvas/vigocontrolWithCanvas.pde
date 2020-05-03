@@ -68,7 +68,9 @@ void prepareXY(PlotterCanvas c) {
   //new Drawing1(c);
   //new Drawing2(c);
   //new Drawing3(c);
-  new Drawing4(c);
+  //new Drawing4(c);
+  new Drawing5(c);
+  
 }
 
 void draw() {

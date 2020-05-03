@@ -17,6 +17,8 @@ public class CurveSegment extends GsynlibBase {
 	public PVector t2 = new PVector();
 
 	public int id = 0;
+	
+	public VectorPool vec;
 
 	public CurveSegment(int id) {
 		this.id = id;
@@ -36,27 +38,27 @@ public class CurveSegment extends GsynlibBase {
 		PVector tp = i == 0 ? this.p2 : this.p3;
 		PVector p = i == 0 ? this.p1 : this.p4;
 		
-		PVector h = GApp.getVector();
+		PVector h = vec.get();
 
 		h.x = cos(angle) * dist;
 		h.y = sin(angle) * dist;
 		h.add(p);
 
 		tp.set(h);
-		GApp.disposeVector(h);
+		vec.dispose(h);
 
 		createTangents();
 	}
 
 	void createTangents() {
-		PVector h = GApp.getVector();
+		PVector h = vec.get();
 		h.set(p2);
 		h.sub(p1);
 		t1.set(h);
 		h.set(p3);
 		h.sub(p4);
 		t2.set(h);
-		GApp.disposeVector(h);
+		vec.dispose(h);
 	}
 
 	public PVector sampleCurve(float t, Boolean reverse) {

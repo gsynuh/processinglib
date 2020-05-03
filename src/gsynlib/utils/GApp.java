@@ -36,48 +36,6 @@ public class GApp {
 		return dx*dx + dy*dy;
 	}
 	
-	public static Boolean vectorPoolInitialized = false;
-	static int livePVCount = 0;
-	static ArrayList<PVector> vectorPool = new ArrayList<PVector>();
-	static ArrayList<PVector> liveVec = new ArrayList<PVector>();
-	
-	static void InitializePool() {
-		IncrementPoolSize(128);
-		vectorPoolInitialized = true;
-	}
-	
-	static void IncrementPoolSize(int size) {
-		for(int i = 0; i < size; i++) {
-			vectorPool.add(new PVector());
-		}
-	}
-	
-	public static PVector getVector() {
-		if(!vectorPoolInitialized) {
-			InitializePool();
-		}
-		
-		if(livePVCount >= vectorPool.size()) {
-			IncrementPoolSize(32);
-		}
-		
-		PVector vec =  vectorPool.get(livePVCount);
-		vec.set(0,0,0);
-		
-		if(liveVec.add(vec)) {
-			livePVCount++;
-			vectorPool.remove(vec);
-		}
-		return vec;
-	}
-	
-	public static void disposeVector(PVector p) {
-		if(liveVec.remove(p)) {
-			livePVCount--;
-			vectorPool.add(p);
-		}
-	}
-	
 	public static int color(int r, int g, int b, int a) {
 		r = r & 0xFF;
 		g = g & 0xFF;

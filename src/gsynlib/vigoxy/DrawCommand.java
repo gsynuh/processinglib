@@ -62,18 +62,18 @@ public class DrawCommand extends PlotterCommand {
 
 	protected void TransformPoint(int index) {
 		PVector bp = bakedPoints.get(index);
-		PVector h = GApp.getVector();
+		PVector h = canvas.vecPool.get();
 		currentMatrix.mult(bp, h);
 		bp.set(h);
-		GApp.disposeVector(h);
+		canvas.vecPool.dispose(h);
 		bakedPoints.set(index, bp);
 	}
 
 	protected PVector TransformPoint(PVector p) {
-		PVector h = GApp.getVector();
+		PVector h = canvas.vecPool.get();
 		currentMatrix.mult(p, h);
 		p.set(h);
-		GApp.disposeVector(h);
+		canvas.vecPool.dispose(h);
 		return p;
 	}
 
@@ -169,7 +169,7 @@ public class DrawCommand extends PlotterCommand {
 
 		fillList.clear();
 		
-		PVector h = GApp.getVector();
+		PVector h = canvas.vecPool.get();
 
 		for (int i = 0; i < bakedPoints.size() - 1; i++) {
 			
@@ -200,7 +200,7 @@ public class DrawCommand extends PlotterCommand {
 			}
 		}
 		
-		GApp.disposeVector(h);
+		canvas.vecPool.dispose(h);
 		
 		//ADD END POINT AS FILL STOPS EARLY.
 		fillList.add(bakedPoints.get(bakedPoints.size()-1).copy());

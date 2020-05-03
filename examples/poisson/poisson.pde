@@ -5,7 +5,7 @@ long start = 0;
 long end = 0;
 long procTime = 0;
 
-float minDistance = 14;
+float minDistance = 10;
 
 PoissonSampler poisson;
 
@@ -48,6 +48,7 @@ void init() {
   }
 
   println("process ms:", procTime/1000000);
+  System.gc();
 }
 
 void keyPressed() {
@@ -56,17 +57,11 @@ void keyPressed() {
 
 void draw() {
   background(255);
-  
-  noFill();
-  stroke(200);
-  strokeWeight(1);
-  rect(poisson.bounds.position.x,poisson.bounds.position.y,
-  poisson.bounds.size.x,poisson.bounds.size.y);
 
   for (int i = 0; i < points.size(); i++) {
     PVector p = points.get(i);
 
-    fill(255, 0, 0, 20);
+    fill(255, 0, 0, 0);
     noStroke();
     ellipse(p.x, p.y, minDistance*2, minDistance*2);
 

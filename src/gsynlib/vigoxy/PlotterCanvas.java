@@ -24,6 +24,8 @@ public class PlotterCanvas extends GsynlibBase {
 
 	protected PlotterXY plotter;
 	protected ArrayList<PlotterCommand> commands;
+	
+	public VectorPool vecPool;
 
 	Boolean prepared = false;
 
@@ -55,6 +57,8 @@ public class PlotterCanvas extends GsynlibBase {
 
 		app().registerMethod("draw", this);
 		getMethods();
+		
+		vecPool = new VectorPool(128);
 
 		prepare();
 		bake();

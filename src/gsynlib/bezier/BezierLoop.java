@@ -2,6 +2,8 @@ package gsynlib.bezier;
 
 import gsynlib.base.*;
 import gsynlib.geom.*;
+import gsynlib.utils.*;
+
 import java.util.*;
 import processing.core.*;
 import static processing.core.PApplet.*;
@@ -14,6 +16,7 @@ public class BezierLoop extends GsynlibBase {
 	public float bakePrecision = 20;
 
 	PoissonSampler poisson;
+	VectorPool vecPool;
 
 	float m;
 
@@ -29,6 +32,7 @@ public class BezierLoop extends GsynlibBase {
 	}
 
 	public BezierLoop() {
+		vecPool = new VectorPool(64);
 		poisson = new PoissonSampler();
 		setDefaultTargetBounds();
 		targetBounds.dirty = false;
@@ -100,6 +104,7 @@ public class BezierLoop extends GsynlibBase {
 		for (int i = 0; i < numCurves; i++) {
 
 			CurveSegment cs = new CurveSegment(i);
+			cs.vec = vecPool;
 
 			PVector p4 = getRandom();
 
@@ -122,6 +127,7 @@ public class BezierLoop extends GsynlibBase {
 		CurveSegment csB = curves.get(curves.size() - 1);
 		CurveSegment csA = curves.get(0);
 		CurveSegment csClose = new CurveSegment((int) numCurves);
+		csClose.vec = vecPool;
 
 		csClose.initialize(csB.p4, csA.p1);
 		csClose.setTrangent(0, csB.t2.heading() - PI, csB.t2.mag());

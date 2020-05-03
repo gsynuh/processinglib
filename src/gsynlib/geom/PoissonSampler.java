@@ -2,6 +2,7 @@ package gsynlib.geom;
 
 import gsynlib.base.*;
 import gsynlib.utils.GApp;
+import gsynlib.utils.*;
 
 import java.util.*;
 import processing.core.*;
@@ -21,6 +22,8 @@ public class PoissonSampler extends GsynlibBase {
 	public int maxSearchIterations = 32;
 
 	ArrayList<PVector> points;
+	
+	VectorPool vecpool;
 
 	public ArrayList<PVector> getPoints() {
 		return points;
@@ -29,6 +32,7 @@ public class PoissonSampler extends GsynlibBase {
 	public PoissonSampler() {
 		bounds = new Bounds();
 		points = new ArrayList<PVector>();
+		vecpool = new VectorPool(64);
 	}
 
 	public void init(float minDistance, float _x, float _y, float _w, float _h) {
@@ -60,6 +64,7 @@ public class PoissonSampler extends GsynlibBase {
 
 	PVector candidate = new PVector();
 	ArrayList<PVector> spawnPoints = new ArrayList<PVector>();
+	PVector initPoint = new PVector();
 	
 	int cellIndex(float pos) {
 		return floor(pos / cellSize);
@@ -77,10 +82,7 @@ public class PoissonSampler extends GsynlibBase {
 		//We're doing everything as if bounds is at 0,0
 		//So create the 'center' point
 		
-		PVector initPoint = new PVector(
-				bounds.size.x * 0.5f,
-				bounds.size.y * 0.5f
-				);
+		initPoint.set(bounds.size.x * 0.5f,bounds.size.y * 0.5f);
 		
 		spawnPoints.add(initPoint);
 
@@ -98,9 +100,11 @@ public class PoissonSampler extends GsynlibBase {
 				if (isPointValid(candidate, grid, gridSizeX, gridSizeY, sqrdMinDist)) { // check if point is within
 																						// bounds and there are not
 																						// points closer than min dist
-
 					points.add(candidate.copy());
-					spawnPoints.add(candidate.copy());
+					
+					PVector v = vecpool.get();
+					v.set(candidate);
+					spawnPoints.add(v);
 
 					grid[cellIndex(candidate.x)][cellIndex(candidate.y)] = points.size();
 					candidateAccepted = true;
@@ -109,6 +113,8 @@ public class PoissonSampler extends GsynlibBase {
 			}
 
 			if (!candidateAccepted) {
+				PVector v = spawnPoints.get(spawnIndex);
+				vecpool.dispose(v);
 				spawnPoints.remove(spawnIndex);
 			}
 
@@ -116,6 +122,9 @@ public class PoissonSampler extends GsynlibBase {
 
 		// move all points to bounds position
 		translatePoints(bounds.position);
+		
+		
+		vecpool.clear();
 	}
 
 	void setRandomCandidate(PVector from, PVector candidate) {
