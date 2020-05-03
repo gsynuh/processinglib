@@ -5,9 +5,13 @@ long start = 0;
 long end = 0;
 long procTime = 0;
 
-float minDistance = 15;
+float minDistance = 6;
 
 PoissonSampler poisson;
+
+ArrayList<PVector> points;
+ArrayList<Integer> highlights = new ArrayList<Integer>();
+long ms = 0;
 
 void setup() {
   size(800, 800);
@@ -15,14 +19,11 @@ void setup() {
   poisson = new PoissonSampler();
   init();
 }
-
-ArrayList<PVector> points;
-ArrayList<Integer> highlights = new ArrayList<Integer>();
 void init() {
 
   start = System.nanoTime();
 
-  poisson.maxSearchIterations = 15;
+  poisson.maxSearchIterations = 10;
   poisson.init(minDistance, 50, 150, width-100, height-300);
 
   end = System.nanoTime();
@@ -47,7 +48,7 @@ void init() {
     }
   }
 
-  println("process ms:", procTime/1000000);
+  ms = procTime/1000000;
   System.gc();
 }
 
@@ -75,4 +76,7 @@ void draw() {
 
     point(p.x, p.y);
   }
+
+  fill(0);
+  text("numPoints:" + points.size() + " procTime:" + ms + "ms", 10, height - 5);
 }
