@@ -5,11 +5,13 @@ long start = 0;
 long end = 0;
 long procTime = 0;
 
-float minDistance = 6;
+float minDistance = 12;
 
 PoissonSampler poisson;
 
 ArrayList<PVector> points;
+ArrayList<Integer> data;
+
 ArrayList<Integer> highlights = new ArrayList<Integer>();
 long ms = 0;
 
@@ -31,6 +33,8 @@ void init() {
   procTime = end-start;
 
   points = poisson.getPoints();
+  data = poisson.getPointsData();
+  
   highlights.clear();
 
   for (int i = 0; i < points.size(); i++) {
@@ -58,20 +62,24 @@ void keyPressed() {
 
 void draw() {
   background(255);
+  
+    colorMode(HSB);
 
   for (int i = 0; i < points.size(); i++) {
     PVector p = points.get(i);
+    Integer d = data.get(i);
 
-    fill(255, 0, 0, 0);
+    fill(0, 255, 255, 20);
     noStroke();
-    ellipse(p.x, p.y, minDistance*2, minDistance*2);
+    //ellipse(p.x, p.y, minDistance*2, minDistance*2);
+
 
     if (highlights.contains(i)) {
       strokeWeight(5);
-      stroke(255, 0, 0);
+      stroke(0,255,255);
     } else { 
       strokeWeight(4);
-      stroke(64);
+      stroke(d%255,255,255);
     }
 
     point(p.x, p.y);

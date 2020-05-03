@@ -22,16 +22,22 @@ public class PoissonSampler extends GsynlibBase {
 	public int maxSearchIterations = 32;
 
 	ArrayList<PVector> points;
+	ArrayList<Integer> pointsData;
 	
 	VectorPool vecpool;
 
 	public ArrayList<PVector> getPoints() {
 		return points;
 	}
+	
+	public ArrayList<Integer> getPointsData() {
+		return pointsData;
+	}
 
 	public PoissonSampler() {
 		bounds = new Bounds();
 		points = new ArrayList<PVector>();
+		pointsData = new ArrayList<Integer>();
 		vecpool = new VectorPool(64);
 	}
 
@@ -72,6 +78,7 @@ public class PoissonSampler extends GsynlibBase {
 
 	void build() {
 		points.clear();
+		pointsData.clear();
 		spawnPoints.clear();
 
 		int gridSizeX = ceil(bounds.size.x / this.cellSize);
@@ -85,6 +92,8 @@ public class PoissonSampler extends GsynlibBase {
 		initPoint.set(bounds.size.x * 0.5f,bounds.size.y * 0.5f);
 		
 		spawnPoints.add(initPoint);
+		
+		int counter = 0;
 
 		while (spawnPoints.size() > 0) {
 
@@ -101,6 +110,7 @@ public class PoissonSampler extends GsynlibBase {
 																						// bounds and there are not
 																						// points closer than min dist
 					points.add(candidate.copy());
+					pointsData.add(counter);
 					
 					PVector v = vecpool.get();
 					v.set(candidate);
@@ -108,6 +118,7 @@ public class PoissonSampler extends GsynlibBase {
 
 					grid[cellIndex(candidate.x)][cellIndex(candidate.y)] = points.size();
 					candidateAccepted = true;
+					counter++;
 					break;
 				}
 			}

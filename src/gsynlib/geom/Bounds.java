@@ -118,6 +118,21 @@ public class Bounds extends GsynlibBase {
 
 		return !(leftB > rightA || rightB < leftA || topB > bottomA || bottomB < topA);
 	}
+	
+	public Boolean Contains(Bounds b) {
+
+		float leftA = this.position.x;
+		float rightA = this.position.x + this.size.x;
+		float topA = this.position.y;
+		float bottomA = this.position.y + this.size.y;
+
+		float leftB = b.position.x;
+		float rightB = b.position.x + b.size.x;
+		float topB = b.position.y;
+		float bottomB = b.position.y + b.size.y;
+
+		return (leftB >= leftA && rightB <= rightA && topB >= topA && bottomB <= bottomA);
+	}
 
 	public Boolean Contains(PVector p) {
 

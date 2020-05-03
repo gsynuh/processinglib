@@ -150,7 +150,7 @@ public class Boid extends QuadTreeData {
     pushMatrix();
     pushStyle();
     noStroke();
-    fill(0, 200);
+    fill(0, 64);
     ellipse(position.x, position.y, 8, 8);
     popStyle();
     popMatrix();

@@ -21,10 +21,17 @@ public class QuadTree<T extends QuadTreeData> extends GsynlibBase {
 	public QuadTreeNode<T> getRoot() {
 		return this.root;
 	}
-
+	
 	public QuadTree(Bounds initialBounds) {
-		root = new QuadTreeNode<T>();
+		create(initialBounds);
+	}
 
+	public QuadTree(float _x,float _y, float _w, float _h) {
+		create(new Bounds(_x,_y,_w,_h));
+	}
+	
+	void create(Bounds initialBounds) {
+		root = new QuadTreeNode<T>();
 		root.tree = this;
 		root.bounds.set(initialBounds);
 	}

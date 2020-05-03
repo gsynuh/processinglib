@@ -15,10 +15,13 @@ void setup() {
 
   GApp.set(this);
 
-  QuadTreeNode.maxNodeDataNum = 3;
+  QuadTreeNode.maxNodeDataNum = 4;
 
   b = new Bounds(325.3, 315.3, 125, 125);
   quadTree = new QuadTree<Boid>(b);
+  
+  quadTree.debugDrawVisited = false;
+  quadTree.debugDrawData = false;
 
 
   for (int i = 0; i < 500; i++) {
