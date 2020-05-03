@@ -89,7 +89,7 @@ public class BezierLoop extends GsynlibBase {
 		
 		
 		
-		poissonPoints.addAll(poisson.getAllPoints());
+		poissonPoints.addAll(poisson.getPoints());
 
 		PVector p1 = getRandom();
 		PVector tangentTarget = getRandom();

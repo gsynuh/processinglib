@@ -19,6 +19,7 @@ void setup() {
 ArrayList<PVector> points;
 ArrayList<Integer> highlights = new ArrayList<Integer>();
 void init() {
+
   start = System.nanoTime();
 
   poisson.maxSearchIterations = 15;
@@ -28,7 +29,7 @@ void init() {
 
   procTime = end-start;
 
-  points = poisson.getAllPoints();
+  points = poisson.getPoints();
   highlights.clear();
 
   for (int i = 0; i < points.size(); i++) {
@@ -55,18 +56,28 @@ void keyPressed() {
 
 void draw() {
   background(255);
+  
+  noFill();
+  stroke(220);
+  strokeWeight(1);
+  rect(poisson.bounds.position.x,poisson.bounds.position.y,
+  poisson.bounds.size.x,poisson.bounds.size.y);
 
   for (int i = 0; i < points.size(); i++) {
     PVector p = points.get(i);
+
+    fill(255, 0, 0, 20);
+    noStroke();
+    ellipse(p.x, p.y, minDistance*2, minDistance*2);
 
     if (highlights.contains(i)) {
       strokeWeight(5);
       stroke(255, 0, 0);
     } else { 
       strokeWeight(4);
-      stroke(120);
+      stroke(64);
     }
-    
+
     point(p.x, p.y);
   }
 }
