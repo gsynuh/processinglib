@@ -31,8 +31,8 @@ public class PoissonSampler extends GsynlibBase {
 		points = new ArrayList<PVector>();
 	}
 
-	public void init(float minDistance, float _x, float _y, float _w, float _h) {
-		bounds.set(_x, _y,_w,_h);
+	public void init(float minDistance, float _x, float _y, float _size) {
+		bounds.set(_x, _y,_size,_size);
 		this.minDistance = minDistance;
 		this.cellSize = this.minDistance / sqrt(2);
 		build();

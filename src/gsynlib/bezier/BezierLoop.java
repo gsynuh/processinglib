@@ -79,12 +79,12 @@ public class BezierLoop extends GsynlibBase {
 		
 		float minDistance = ceil(this.targetBounds.size.x / sqrt(numPointsNeededPerCurve));
 
+		float s = maxDist/sqrt(2);
 		
 		poisson.init(minDistance, 
-				this.targetBounds.position.x - maxDist, 
-				this.targetBounds.position.y - maxDist,
-				this.targetBounds.size.x + maxDist*2,
-				this.targetBounds.size.y + maxDist*2);
+				this.targetBounds.position.x - s, 
+				this.targetBounds.position.y - s,
+				this.targetBounds.size.x + s*2);
 		
 		
 		
