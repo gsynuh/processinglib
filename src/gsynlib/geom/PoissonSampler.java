@@ -114,8 +114,8 @@ public class PoissonSampler extends GsynlibBase {
 
 			if (!candidateAccepted) {
 				PVector v = spawnPoints.get(spawnIndex);
-				vecpool.dispose(v);
 				spawnPoints.remove(spawnIndex);
+				vecpool.dispose(v);
 			}
 
 		}
@@ -123,8 +123,6 @@ public class PoissonSampler extends GsynlibBase {
 		// move all points to bounds position
 		translatePoints(bounds.position);
 		
-		
-		vecpool.clear();
 	}
 
 	void setRandomCandidate(PVector from, PVector candidate) {
