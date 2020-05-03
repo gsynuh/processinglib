@@ -23,6 +23,8 @@ public class VectorPool {
 		vectorPool.clear();
 		liveVec.clear();
 		livePVCount = 0;
+		vectorPoolInitialized = false;
+		System.gc();
 		InitializePool();
 	}
 	
