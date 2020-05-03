@@ -8,8 +8,9 @@ import processing.core.*;
 import static processing.core.PApplet.*;
 
 /**
- * @author gsynuh Based on Sebastian Lague's C# implementation
- *         (https://www.youtube.com/watch?v=7WcmyxyFO7o)
+ * @author gsynuh
+ * @code Based on Sebastian Lague's C# implementation
+ *       (https://www.youtube.com/watch?v=7WcmyxyFO7o)
  */
 public class PoissonSampler extends GsynlibBase {
 
@@ -59,6 +60,10 @@ public class PoissonSampler extends GsynlibBase {
 
 	PVector candidate = new PVector();
 	ArrayList<PVector> spawnPoints = new ArrayList<PVector>();
+	
+	int cellIndex(float pos) {
+		return floor(pos / cellSize);
+	}
 
 	void build() {
 		points.clear();
@@ -69,7 +74,15 @@ public class PoissonSampler extends GsynlibBase {
 		float sqrdMinDist = this.minDistance * this.minDistance;
 		int[][] grid = new int[gridSizeX][gridSizeY];
 
-		spawnPoints.add(bounds.center.copy()); // start from center
+		//We're doing everything as if bounds is at 0,0
+		//So create the 'center' point
+		
+		PVector initPoint = new PVector(
+				bounds.size.x * 0.5f,
+				bounds.size.y * 0.5f
+				);
+		
+		spawnPoints.add(initPoint);
 
 		while (spawnPoints.size() > 0) {
 
@@ -80,7 +93,7 @@ public class PoissonSampler extends GsynlibBase {
 
 			for (int i = 0; i < maxSearchIterations; i++) {
 
-				createCandidate(sp, candidate); // create random vector starting from spawn point
+				setRandomCandidate(sp, candidate); // create random vector starting from spawn point
 
 				if (isPointValid(candidate, grid, gridSizeX, gridSizeY, sqrdMinDist)) { // check if point is within
 																						// bounds and there are not
@@ -89,7 +102,7 @@ public class PoissonSampler extends GsynlibBase {
 					points.add(candidate.copy());
 					spawnPoints.add(candidate.copy());
 
-					grid[cellX(candidate.x)][cellY(candidate.y)] = points.size();
+					grid[cellIndex(candidate.x)][cellIndex(candidate.y)] = points.size();
 					candidateAccepted = true;
 					break;
 				}
@@ -105,22 +118,15 @@ public class PoissonSampler extends GsynlibBase {
 		translatePoints(bounds.position);
 	}
 
-	void createCandidate(PVector center, PVector candidate) {
+	void setRandomCandidate(PVector from, PVector candidate) {
 
-		float a = app().random(0, TWO_PI);
+		float a = app().random(-TWO_PI, TWO_PI);
 		float d = app().random(this.minDistance, this.minDistance * 2);
-		candidate.set(center);
-
+		
+		candidate.set(from);
+		
 		candidate.x += cos(a) * d;
 		candidate.y += sin(a) * d;
-	}
-
-	int cellX(float x) {
-		return floor(x / cellSize);
-	}
-
-	int cellY(float y) {
-		return floor(y / cellSize);
 	}
 
 	Boolean isPointValid(PVector p, int[][] grid, int gridSizeX, int gridSizeY, float sqrdDist) {
@@ -128,18 +134,16 @@ public class PoissonSampler extends GsynlibBase {
 		if (p.x < 0 || p.x > bounds.size.x || p.y < 0 || p.y > bounds.size.y)
 			return false;
 
-		int gridX = cellX(p.x);
-		int gridY = cellY(p.y);
+		int gridX = cellIndex(p.x);
+		int gridY = cellIndex(p.y);
 
-		int searchDim = 3;
+		int searchXa = max(0, gridX - 2);
+		int searchXb = min(gridSizeX - 1, gridX + 2);
+		int searchYa = max(0, gridY - 2);
+		int searchYb = min(gridSizeY - 1, gridY + 2);
 
-		int searchXa = max(0, gridX - searchDim);
-		int searchXb = min(gridSizeX, gridX + searchDim);
-		int searchYa = max(0, gridY - searchDim);
-		int searchYb = min(gridSizeY, gridY + searchDim);
-
-		for (int x = searchXa; x < searchXb; x++) {
-			for (int y = searchYa; y < searchYb; y++) {
+		for (int x = searchXa; x <= searchXb; x++) {
+			for (int y = searchYa; y <= searchYb; y++) {
 
 				int pointIndex = grid[x][y] - 1; // when index is set, it's 1 based
 

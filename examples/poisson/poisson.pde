@@ -5,7 +5,7 @@ long start = 0;
 long end = 0;
 long procTime = 0;
 
-float minDistance = 15;
+float minDistance = 14;
 
 PoissonSampler poisson;
 
@@ -22,7 +22,7 @@ void init() {
 
   start = System.nanoTime();
 
-  poisson.maxSearchIterations = 15;
+  poisson.maxSearchIterations = 10;
   poisson.init(minDistance, 50, 150, width-100, height-300);
 
   end = System.nanoTime();
@@ -58,7 +58,7 @@ void draw() {
   background(255);
   
   noFill();
-  stroke(220);
+  stroke(200);
   strokeWeight(1);
   rect(poisson.bounds.position.x,poisson.bounds.position.y,
   poisson.bounds.size.x,poisson.bounds.size.y);
