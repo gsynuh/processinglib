@@ -8,7 +8,7 @@ import static processing.core.PApplet.*;
 
 /**
  * @author gsynuh
- * Fake Poisson Disc sampler. each getPoint() returns an unsed point in the list. Used first in the bezier loop sketch.
+ * Based on Sebastian Lague's C# implementation (https://www.youtube.com/watch?v=7WcmyxyFO7o)
  */
 public class PoissonSampler extends GsynlibBase {
 
@@ -31,8 +31,8 @@ public class PoissonSampler extends GsynlibBase {
 		points = new ArrayList<PVector>();
 	}
 
-	public void init(float minDistance, float _x, float _y, float _size) {
-		bounds.set(_x, _y,_size,_size);
+	public void init(float minDistance, float _x, float _y, float _w, float _h) {
+		bounds.set(_x, _y,_w,_h);
 		this.minDistance = minDistance;
 		this.cellSize = this.minDistance / sqrt(2);
 		build();
@@ -70,7 +70,7 @@ public class PoissonSampler extends GsynlibBase {
 	int cellX(float x) {return floor(x / cellSize);}
 	int cellY(float y) {return floor(y / cellSize);}
 	
-	Boolean isPointValid(PVector p,int[][] grid, int gridSize, float sqrdDist) {
+	Boolean isPointValid(PVector p,int[][] grid, int gridSizeX, int gridSizeY, float sqrdDist) {
 				
 		if(p.x < 0 || p.x > bounds.size.x || p.y < 0 || p.y > bounds.size.y)
 			return false;
@@ -79,9 +79,9 @@ public class PoissonSampler extends GsynlibBase {
 		int gridY = cellY(p.y);
 		
 		int searchXa = max(0,gridX - 2);
-		int searchXb = min(gridSize,gridX + 2);
+		int searchXb = min(gridSizeX,gridX + 2);
 		int searchYa = max(0,gridY - 2);
-		int searchYb = min(gridSize,gridY + 2);
+		int searchYb = min(gridSizeY,gridY + 2);
 		
 		
 		for(int x = searchXa; x < searchXb; x++) {
@@ -113,10 +113,10 @@ public class PoissonSampler extends GsynlibBase {
 		points.clear();
 		spawnPoints.clear();
 		
-		float boundSize = bounds.size.x < bounds.size.y ? bounds.size.x : bounds.size.y;	
-		int gridSize = ceil(boundSize / this.cellSize);	
+		int gridSizeX = ceil(bounds.size.x / this.cellSize);	
+		int gridSizeY = ceil(bounds.size.y / this.cellSize);
 		float sqrdMinDist = this.minDistance * this.minDistance;
-		int[][] grid = new int[gridSize][gridSize];
+		int[][] grid = new int[gridSizeX][gridSizeY];
 		
 		spawnPoints.add(bounds.center.copy());
 		
@@ -131,7 +131,7 @@ public class PoissonSampler extends GsynlibBase {
 				
 				createCandidate(sp,candidate);
 				
-				if(isPointValid(candidate,grid,gridSize,sqrdMinDist)) {
+				if(isPointValid(candidate,grid,gridSizeX,gridSizeY,sqrdMinDist)) {
 					
 					points.add(candidate.copy());
 					spawnPoints.add(candidate.copy());

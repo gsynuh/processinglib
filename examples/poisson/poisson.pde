@@ -22,7 +22,7 @@ void init() {
   start = System.nanoTime();
 
   poisson.maxSearchIterations = 10;
-  poisson.init(minDistance, 50, 50, width-100);
+  poisson.init(minDistance, 50, 150, width-100, height-300);
 
   end = System.nanoTime();
 

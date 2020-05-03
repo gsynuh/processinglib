@@ -84,7 +84,8 @@ public class BezierLoop extends GsynlibBase {
 		poisson.init(minDistance, 
 				this.targetBounds.position.x - s, 
 				this.targetBounds.position.y - s,
-				this.targetBounds.size.x + s*2);
+				this.targetBounds.size.x + s*2,
+				this.targetBounds.size.y + s*2);
 		
 		
 		
