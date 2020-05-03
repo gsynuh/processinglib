@@ -26,20 +26,33 @@ void init() {
   quadTree.debugDrawVisited = false;
   quadTree.debugDrawVectors = false;
   quadTree.debugDrawData = false;
-  quadTree.debugVectorScale = 10;
+  quadTree.debugVectorScale = 20;
 
   seed = round(random(0, 99999));
 
   noiseSeed(seed);
 
   float noiseScale = 0.005;
-  float margin = 0;
+  float margin = 20;
 
   PVector c = new PVector(width/2, height/2);
+  
+  PoissonSampler poissonSampler = new PoissonSampler();
+  poissonSampler.maxSearchIterations = 10;
+  poissonSampler.init(20,margin,margin,width-margin*2,height-margin*2);
+  
+  ArrayList<PVector> points = new ArrayList<PVector>();
+  points.addAll(poissonSampler.getPoints());
 
   //NOISE FORCES
-  for (int i = 0; i < 1000; i++) {
-    PVector pos = new PVector(random(margin, width-margin*2), random(margin, height-margin*2));
+  while(points.size() > 0) {
+    
+    PVector poissonPoint = points.get(0);
+    points.remove(0);
+    
+    PVector pos = poissonPoint.copy();
+    
+    
     PVector vec = new PVector();
 
     float d = PVector.dist(pos, c);
