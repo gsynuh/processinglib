@@ -42,8 +42,8 @@ public class Grid<T extends Object> {
 	
 	int mod(int v, int s) {
 		
-		if(v < 0)
-			v = s + v;
+		while(v < 0)
+			v = s+v;
 		
 		v = v%s;
 		
@@ -56,7 +56,7 @@ public class Grid<T extends Object> {
 			x = mod(x,width);
 			y = mod(y,height);
 		}else {
-			if(x < 0 || x > width || y < 0 || y > height) 
+			if(x < 0 || x > width-1 || y < 0 || y > height-1) 
 				return -1;
 		}
 		

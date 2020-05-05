@@ -1,5 +1,6 @@
 import gsynlib.utils.*;
 import gsynlib.image.*;
+import gsynlib.geom.*;
 
 Grid<Float> conv;
 Grid<ColorFloat> backstate;
@@ -10,13 +11,23 @@ PImage renderImage;
 int simulationW = 0;
 int simulationH = 0;
 
+float divisions = 3;
+float scale = 0.5;
+
+float dA = 1;
+float dB = 0.48;
+float feed = 0.056;
+float k = 0.062;
+float dT = 1;
+
+Boolean invertColors = false;
+
 void setup() {
-  size(600, 600);
+  size(800, 800);
+  GApp.set(this);
 
-  colorMode(HSB);
-
-  simulationW = width/3;
-  simulationH = height/3;
+  simulationW = floor(width*scale);
+  simulationH = floor(height*scale);
   renderImage = createImage(simulationW, simulationH, RGB);
 
 
@@ -54,21 +65,42 @@ void setup() {
   init();
 }
 
+void mousePressed() {
+  invertColors = !invertColors;
+}
+
 void init() {
 
   for (int i = 0; i < state.size(); i++) {
     ColorFloat c = state.get(i);
-    c.a = 1f;
-    c.b = 0f;
+    c.a = random(0.6,1);
+    c.b = random(0,0.03);
   }  
   blitState();
 
-  //DRAW SOME SQUARES
-  for (int i = 0; i < 200; i++) {
-    drawSquareAt(
-      round(random(simulationW)), 
-      round(random(simulationH)), 
-      floor(random(0, 20)));
+  noiseSeed(round(random(99999)));
+  PoissonSampler poisson = new PoissonSampler();
+  float minDist = (simulationW<simulationH? simulationW : simulationH) / 10;
+  poisson.init(minDist, -100, -100, simulationW+100, simulationH+100);
+
+  int m = floor(minDist/2);
+  for (PVector p : poisson.getPoints()) {
+    int px = floor(p.x);
+    int py = floor(p.y);
+    if (px < 0 || px > simulationW) continue;
+    if (py < 0 || py > simulationH) continue;
+
+    for (int x = px -m; x < px+m; x++) {
+      for (int y = py -m; y < py+m; y++) {
+        ColorFloat c = state.get(x, y);
+        if(random(1) > 0.9) {
+          c.a += random(0.5,0.4);
+          c.b += random(0.6,0.5);
+        }
+        
+        c.clamp();
+      }
+    }
   }
 
   blitState();
@@ -86,12 +118,6 @@ void blitState() {
     bc.set(c);
   }
 }
-
-float dA = 1;
-float dB = 0.5;
-float feed = 0.055;
-float k = 0.062;
-float dT = 1;
 
 float laplace(Grid<ColorFloat> grid, int val, int startX, int startY) {
 
@@ -141,29 +167,23 @@ void updateState() {
   }
 }
 
-void drawSquareAt(int mX, int mY, int m) {
-  for (int x = -m; x < m; x++) {
-    for (int y = -m; y < m; y++) {
-      ColorFloat c = backstate.get(mX + x, mY + y);
-      ColorFloat s = state.get(mX + x, mY + y);
-      c.a += 0.2f;
-      c.b += 0.2f;
-      c.clamp();
-      s.set(c);
-    }
-  }
+float contrast(float value) {
+  float prec = 4;
+  value = value * prec - prec/2;
+  value = constrain(value, 0, 1);
+  return value;
 }
 
 void draw() {
-  background(255);
+  background(0);
 
-  for (int i = 0; i < 30; i++) {
+  for (int i = 0; i < 25; i++) {
     updateState();
     blitState();
   }
 
   color c1 = color(0);
-  color c2 = color(30, 255, 255);
+  color c2 = color(255);
 
   renderImage.loadPixels();
   for (int x = 0; x< state.width(); x++) {
@@ -171,20 +191,24 @@ void draw() {
       int index = x + y*state.width();
       ColorFloat c = state.get(x, y);
       float a = c.a;
-      float b = c.b-0.5;
-      float t = constrain(a-b, 0, 1);
-      t = (cos(t*PI*2)*0.5 + 0.5);
+      float b = c.b;
+      float t = abs((invertColors ? 1 : 0) - contrast(a-b));
 
-      renderImage.pixels[index] = lerpColor(c1, c2, t);
+      renderImage.pixels[index] = color(t*255);
     }
   }
   renderImage.updatePixels();
 
-  float sX = width/renderImage.width *0.5;
-  float sY = height/renderImage.height *0.5;
+  float sX = width/(float)renderImage.width /divisions;
+  float sY = height/(float)renderImage.height /divisions;
+  float w = (float)renderImage.width;
+  float h = (float)renderImage.height;
+
   scale(sX, sY);
-  image(renderImage, 0, 0);
-  image(renderImage, width/2 / sX, height/2/sY);
-  image(renderImage, width/2 / sX, 0);
-  image(renderImage, 0, height/2 /sY);
+
+  for (int x = 0; x <divisions; x++) {
+    for (int y = 0; y <divisions; y++) {
+      image(renderImage, x*w, y*h);
+    }
+  }
 }
