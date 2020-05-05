@@ -13,8 +13,10 @@ int simulationH = 0;
 void setup() {
   size(600, 600);
 
-  simulationW = width;
-  simulationH = height;
+  colorMode(HSB);
+
+  simulationW = width/3;
+  simulationH = height/3;
   renderImage = createImage(simulationW, simulationH, RGB);
 
 
@@ -62,11 +64,11 @@ void init() {
   blitState();
 
   //DRAW SOME SQUARES
-  for (int i = 0; i < 500; i++) {
+  for (int i = 0; i < 200; i++) {
     drawSquareAt(
       round(random(simulationW)), 
       round(random(simulationH)), 
-      floor(random(0, 5)));
+      floor(random(0, 20)));
   }
 
   blitState();
@@ -146,7 +148,7 @@ void drawSquareAt(int mX, int mY, int m) {
       ColorFloat s = state.get(mX + x, mY + y);
       c.a += 0.2f;
       c.b += 0.2f;
-
+      c.clamp();
       s.set(c);
     }
   }
@@ -160,6 +162,9 @@ void draw() {
     blitState();
   }
 
+  color c1 = color(0);
+  color c2 = color(30, 255, 255);
+
   renderImage.loadPixels();
   for (int x = 0; x< state.width(); x++) {
     for (int y = 0; y<state.height(); y++) {
@@ -170,13 +175,16 @@ void draw() {
       float t = constrain(a-b, 0, 1);
       t = (cos(t*PI*2)*0.5 + 0.5);
 
-      renderImage.pixels[index] = color(t*255);
+      renderImage.pixels[index] = lerpColor(c1, c2, t);
     }
   }
   renderImage.updatePixels();
 
-  float sX = width/renderImage.width;
-  float sY = height/renderImage.height;
+  float sX = width/renderImage.width *0.5;
+  float sY = height/renderImage.height *0.5;
   scale(sX, sY);
   image(renderImage, 0, 0);
+  image(renderImage, width/2 / sX, height/2/sY);
+  image(renderImage, width/2 / sX, 0);
+  image(renderImage, 0, height/2 /sY);
 }
