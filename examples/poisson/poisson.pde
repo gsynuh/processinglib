@@ -5,7 +5,7 @@ long start = 0;
 long end = 0;
 long procTime = 0;
 
-float minDistance = 12;
+float minDistance = 10;
 
 PoissonSampler poisson;
 

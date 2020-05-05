@@ -19,7 +19,7 @@ public class Dithering {
 		if (y < 0 || y >= height)
 			return null;
 
-		return colors[x][y].Copy();
+		return colors[x][y].copy();
 	}
 
 	// error propagation matrix
@@ -73,7 +73,7 @@ public class Dithering {
 			for (int x = 0; x < this.width; x++) {
 
 				ColorFloat oldColor = getColor(x, y);
-				ColorFloat newColor = oldColor.Copy();
+				ColorFloat newColor = oldColor.copy();
 				newColor.Quantize(this.quantizeFactor);
 
 				SetColor(newColor, x, y);

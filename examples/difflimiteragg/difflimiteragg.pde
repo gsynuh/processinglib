@@ -7,7 +7,7 @@ import gsynlib.geom.*;
 QuadTree quadTree;
 
 float radius = 2;
-int iterations = 250;
+int iterations = 100;
 
 VectorPool vecPool;
 
@@ -118,13 +118,22 @@ void stopLive() {
 
 void draw() {
 
-  background(0);
-  fill(255);
-  noStroke();
-  rect(windowBounds.position.x-20, 
-    windowBounds.position.y-20, 
-    windowBounds.size.x+40, 
-    windowBounds.size.y+40);
+  background(255);
+
+  if (liveParticles.size()>0) {
+    strokeWeight(1);
+    noFill();
+    stroke(0);
+    rect(treeBounds.position.x, 
+      treeBounds.position.y, 
+      treeBounds.size.x, 
+      treeBounds.size.y);
+    stroke(0, 0, 255);
+    rect(windowBounds.position.x, 
+      windowBounds.position.y, 
+      windowBounds.size.x, 
+      windowBounds.size.y);
+  }
 
   stroke(255, 0, 0);
 

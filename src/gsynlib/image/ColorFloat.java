@@ -34,7 +34,7 @@ public class ColorFloat {
 		this.r = round(this.r*factor)/factor;
 		this.g = round(this.g*factor)/factor;
 		this.b = round(this.b*factor)/factor;
-		this.Clamp();
+		this.clamp();
 	}
 
 	public void sub(ColorFloat b) {
@@ -52,15 +52,27 @@ public class ColorFloat {
 		result.b = a.b - b.b;
 		return result;
 	}
-
-	public void CopyTo(ColorFloat b) {
-		b.a = this.a;
-		b.r = this.r;
-		b.g = this.g;
-		b.b = this.b;
+	
+	
+	public void set(float r, float g, float b, float a) {
+		this.r = r;
+		this.g = g;
+		this.b = b;
+		this.a = a;
+	}
+	
+	public void set(float r, float g, float b) {
+		set(r,g,b,this.a);
+	}
+	
+	public void set(ColorFloat b) {
+		this.a = b.a;
+		this.r = b.r;
+		this.g = b.g;
+		this.b = b.b;
 	}
 
-	public ColorFloat Copy() {
+	public ColorFloat copy() {
 		ColorFloat result = new ColorFloat();
 		result.a = this.a;
 		result.r = this.r;
@@ -85,7 +97,7 @@ public class ColorFloat {
 		this.b += b.b;
 	}
 
-	public void Clamp() {
+	public void clamp() {
 		this.a = this.a > 1f ? 1f : this.a < 0f ? 0f : this.a;
 		this.r = this.r > 1f ? 1f : this.r < 0f ? 0f : this.r;
 		this.g = this.g > 1f ? 1f : this.g < 0f ? 0f : this.g;
@@ -94,7 +106,7 @@ public class ColorFloat {
 	
 	public static ColorFloat mult(ColorFloat c, float t) {
 		ColorFloat result = new ColorFloat();
-		c.CopyTo(result);
+		result.set(c);
 		result.a *= t;
 		result.r *= t;
 		result.g *= t;
@@ -120,8 +132,8 @@ public class ColorFloat {
 	}
 	
 	public static int toInt32(ColorFloat c) {
-		c = c.Copy();
-		c.Clamp();
+		c = c.copy();
+		c.clamp();
 		int r = (int)constrain(c.r * 255,0,255);
 		int g = (int)constrain(c.g * 255,0,255);
 		int b = (int)constrain(c.b * 255,0,255);
