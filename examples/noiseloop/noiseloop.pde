@@ -11,19 +11,21 @@ void setup() {
 }
 
 //On mouse press , change the noise loop perimeter
-void mousePressed() {
-  float mX = map(mouseX,0,width,0.0001,20);
+void mousePressed() {  
+  float mX = map(mouseX,0,width,3,10);
   noise.setLoopPerimeter(mX*mX);
 }
 
-
 void draw() {
-
+  
   background(255);
   float numPoints = 360;
   
   noStroke();
   fill(64);
+  
+  float z = (float)frameCount*0.002f;
+  float timeShift = (float)frameCount*0.005f;
   
   //DRAW CIRCLE REPRESENTING NOISE FROM 0-1
   pushMatrix();
@@ -31,7 +33,8 @@ void draw() {
   beginShape();
   for (float i = 0; i <= numPoints; i++) {
     float t = i/numPoints;
-    float n = noise.get(t, (float)frameCount*0.02f ); //the second argument is actually moving the noise in 3D
+    
+    float n = noise.get(t,z);
     float r = height/6 + n*height/6;
     
     float a = t * TWO_PI;
@@ -61,9 +64,9 @@ void draw() {
     float t = i/numSamples;   
     
     //move sample time with frameCount
-    t -= (float)frameCount*0.005f;
+    t -= timeShift;
     
-    float s = noise.get(t);
+    float s = noise.get(t,z);
     
     vertex(i*sampleW,-s*h);
   }
