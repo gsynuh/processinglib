@@ -1,10 +1,13 @@
 import gsynlib.utils.*;
 
-
 NoiseLoop noise;
 
+float z = 0;
+float numLoops = 20;
+float numPoints = 100;
+
 void setup() {
-  size(600, 600);
+  size(800, 800,FX2D);
   GApp.set(this);
 
   noise = new NoiseLoop();
@@ -12,65 +15,52 @@ void setup() {
 
 //On mouse press , change the noise loop perimeter
 void mousePressed() {  
-  float mX = map(mouseX,0,width,3,10);
+  float mX = map(mouseX, 0, width, 1, 5);
   noise.setLoopPerimeter(mX*mX);
 }
 
+void drawTube(int id) {
+    for (float off = - numLoops/2; off < numLoops/2; off++) {
+    beginShape();
+    for (float i = 0; i <= numPoints; i++) {
+      float t = i/numPoints;
+
+      float n = noise.get(id,t,z + off*0.1);
+      float r = height/8 + n*height/12;
+      
+      float x = 0;
+      float y = off*5;
+
+      float a = t * TWO_PI;
+      vertex(cos(a)*r + x, sin(a)*r + y);
+    }
+    endShape(CLOSE);
+  }
+}
+
 void draw() {
-  
+
   background(255);
-  float numPoints = 360;
-  
-  noStroke();
-  fill(64);
-  
-  float z = (float)frameCount*0.002f;
-  float timeShift = (float)frameCount*0.005f;
-  
+
+  noFill();
+  stroke(0);
+
+  z = (float)frameCount*0.02f;
+ 
+
   //DRAW CIRCLE REPRESENTING NOISE FROM 0-1
   pushMatrix();
   translate(width/2, height/2);
-  beginShape();
-  for (float i = 0; i <= numPoints; i++) {
-    float t = i/numPoints;
-    
-    float n = noise.get(t,z);
-    float r = height/6 + n*height/6;
-    
-    float a = t * TWO_PI;
-    vertex(cos(a)*r, sin(a)*r);
-  }
-  endShape(CLOSE);
+  
+  pushMatrix();
+  translate(-width/4,0);
+  drawTube(0);
   popMatrix();
   
-  
-  //DRAW A THE NOISE AS A GRAPH, and scroll it by adding or removing value from the t argument of get(t)
   pushMatrix();
-  float m = 0;
-  float h = height/10;
-  float w = width-m*2;
-  translate(width/2 - w/2,height-m);
+  translate(width/4,0);
+  drawTube(1);
+  popMatrix();
   
-  fill(64);
-  rect(0,-h,w,h);
-  
-  fill(255);
-  beginShape();
-  vertex(0,0);
-  float numSamples = 200;
-  float sampleW = w / numSamples;
-  for(float i = 0; i < numSamples; i++) {
-    
-    float t = i/numSamples;   
-    
-    //move sample time with frameCount
-    t -= timeShift;
-    
-    float s = noise.get(t,z);
-    
-    vertex(i*sampleW,-s*h);
-  }
-  vertex(w,0);
-  endShape(CLOSE);
   popMatrix();
 }
