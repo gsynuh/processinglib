@@ -12,8 +12,8 @@ void setup() {
 
 //On mouse press , change the noise loop perimeter
 void mousePressed() {
-  float mX = map(mouseX,0,width,0.0001,10);
-  noise.setLoopPerimeter(mX);
+  float mX = map(mouseX,0,width,0.0001,20);
+  noise.setLoopPerimeter(mX*mX);
 }
 
 

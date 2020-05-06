@@ -5,16 +5,16 @@ import static processing.core.PApplet.*;
 
 public class NoiseLoop extends GsynlibBase {
 
-	float p = 0;
+	float p = 0; //perimeter of loop
 
 	public NoiseLoop(float perimeter) {
 		this.p = perimeter;
 	}
 
 	public NoiseLoop() {
-		this.p = 1;
+		this.p = 10;
 	}
-	
+
 	public void setLoopPerimeter(float v) {
 		this.p = v;
 	}
@@ -27,7 +27,7 @@ public class NoiseLoop extends GsynlibBase {
 
 		t = t % 1.0f;
 
-		float r = TWO_PI / this.p;
+		float r = this.p / TWO_PI;
 
 		float x = cos(t * TWO_PI) * r;
 		float y = sin(t * TWO_PI) * r;
