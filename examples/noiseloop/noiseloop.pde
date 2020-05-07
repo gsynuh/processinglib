@@ -32,7 +32,7 @@ void drawTubes(float w) {
         float t = i/numPoints;
 
         float n = blobLoops.get(id, t, z);
-        float r = cellSize/4 + n*cellSize/4;
+        float r = cellSize/8 + n*cellSize/2;
 
         float a = t * TWO_PI;
         vertex(
