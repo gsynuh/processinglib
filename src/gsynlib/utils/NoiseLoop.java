@@ -17,13 +17,7 @@ public class NoiseLoop extends GsynlibBase {
 		init();
 	}
 	
-	public NoiseLoop(long seed) {
-		this.seed = seed;
-		this.p = 10;
-		init();
-	}
-	
-	public NoiseLoop(long seed, float perimeter) {
+	public NoiseLoop(float perimeter, long seed) {
 		this.seed = seed;
 		this.p = perimeter;
 		init();
@@ -40,6 +34,7 @@ public class NoiseLoop extends GsynlibBase {
 	}
 	
 	public void setSeed(long seed) {
+		this.seed = seed;
 		init();
 	}
 
@@ -69,8 +64,8 @@ public class NoiseLoop extends GsynlibBase {
 		float x = cos(t * TWO_PI) * r;
 		float y = sin(t * TWO_PI) * r;
 		
-		float offX = (id % gw) * r * 2;
-		float offY = (id / gw) * r * 2;
+		float offX = (id % gw) * (r+1) * 2;
+		float offY = (id / gw) * (r+1) * 2;
 		
 		float n = map((float)noise.eval(x + offX + r, y + offY + r, z),-1,1,0,1);
 		return n;
