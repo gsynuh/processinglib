@@ -41,26 +41,24 @@ void initPreset(int i) {
     sys.addRule("Y", "-FX-Y");
     sys.varA = radians(90);
     startDrawPoint.set(width/2, height/2-50);
-    
   } else if (i == 3) {
 
     //Test
     sys.setAlphabet("XFAB+-![]");
     sys.setAxiom("X");
-    
+
     sys.addRule("X", "A-[X+[!F]-[XB]]++[X]-A");
-    
+
     sys.addRule("A", "AB+[B]-A");
     sys.addRule("B", "X[-A+[F]-A]");
-    
+
     sys.addRule("!", "-[B]-X+");
-    
+
     sys.addRule("F", "-[FA]+");
-    
+
     sys.varA = radians(120);
     sys.varB  = 2;
     startDrawPoint.set(width*0.75, height*0.75);
-    
   } else {
 
     //Fern
@@ -93,11 +91,11 @@ void draw() {
   translate(startDrawPoint.x, startDrawPoint.y);
 
   ArrayList<Character> state = sys.getState();
-  
+
   for (int i = 0; i < state.size(); i++) {
 
     char c = state.get(i);
-    
+
     switch(c) {
     case '[':
       pushMatrix();
