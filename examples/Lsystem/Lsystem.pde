@@ -7,12 +7,13 @@ PVector startDrawPoint = new PVector();
 void setup() {
   size(800, 800);
 
-  frameRate(10);
+  frameRate(5);
 
   sys = new LSystem();
   sys.setSeed(round(random(10000)));
+  sys.varB = 3;
 
-  initPreset(0);
+  initPreset(3);
 
   //advance straight to iteration 3
   sys.process(3);
@@ -25,8 +26,8 @@ void initPreset(int i) {
   if (i == 1) {
 
     //Sierpiński arrowhead curve L-system
-    sys.alphabet = "AB-+";
-    sys.axiom = "A";
+    sys.setAlphabet("AB-+");
+    sys.setAxiom("A");
     sys.addRule("A", "B-A-B");
     sys.addRule("B", "A+B+A");
     sys.varA = radians(60);
@@ -34,17 +35,37 @@ void initPreset(int i) {
   } else if (i == 2) {
 
     //Dragon curve
-    sys.alphabet = "XYF+-";
-    sys.axiom = "FX";
+    sys.setAlphabet("XYF+-");
+    sys.setAxiom("FX");
     sys.addRule("X", "X+YF+");
     sys.addRule("Y", "-FX-Y");
     sys.varA = radians(90);
     startDrawPoint.set(width/2, height/2-50);
+    
+  } else if (i == 3) {
+
+    //Test
+    sys.setAlphabet("XFAB+-![]");
+    sys.setAxiom("X");
+    
+    sys.addRule("X", "A-[X+[!F]-[XB]]++[X]-A");
+    
+    sys.addRule("A", "AB+[B]-A");
+    sys.addRule("B", "X[-A+[F]-A]");
+    
+    sys.addRule("!", "-[B]-X+");
+    
+    sys.addRule("F", "-[FA]+");
+    
+    sys.varA = radians(120);
+    sys.varB  = 2;
+    startDrawPoint.set(width*0.75, height*0.75);
+    
   } else {
 
     //Fern
-    sys.alphabet = "XF+-[]";
-    sys.axiom = "X";
+    sys.setAlphabet("XF+-[]");
+    sys.setAxiom("X");
     sys.addRule("X", "F+[[X]-X]-F[-FX]+X");
     sys.addRule("F", "FF");
     sys.varA = radians(25);
@@ -71,12 +92,12 @@ void draw() {
   strokeWeight(0.8);
   translate(startDrawPoint.x, startDrawPoint.y);
 
-  float d = 3f;
+  ArrayList<Character> state = sys.getState();
+  
+  for (int i = 0; i < state.size(); i++) {
 
-  String state = sys.getState();
-  for (int i = 0; i < state.length(); i++) {
-
-    char c = state.charAt(i);
+    char c = state.get(i);
+    
     switch(c) {
     case '[':
       pushMatrix();
@@ -87,8 +108,8 @@ void draw() {
     case 'A':
     case 'B':
     case 'F':
-      line(0, 0, 0, -d);
-      translate(0, -d);
+      line(0, 0, 0, -sys.varB);
+      translate(0, -sys.varB);
       break;
     case '-':
       rotate(-sys.varA);

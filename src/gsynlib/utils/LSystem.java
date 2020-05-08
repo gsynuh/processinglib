@@ -1,185 +1,228 @@
 package gsynlib.utils;
 
-import java.util.*; 
+import java.util.*;
 
 import static processing.core.PApplet.*;
 
 public class LSystem {
 
-  public String alphabet = ""; // Alphabet
-  public String axiom = "A";
-  public float varA = 0;
+	ArrayList<Character> alphabet = new ArrayList<Character>();
+	ArrayList<Character> axiom = new ArrayList<Character>();
 
-  public Random rand; 
+	ArrayList<Character> backstate = new ArrayList<Character>();
+	ArrayList<Character> nextstate = new ArrayList<Character>();
+	
+	HashMap<Character, LSRuleSet> rules = new HashMap<Character, LSRuleSet>();
 
-  public LSystem() {
-    rand = new Random();
-  }
+	public float varA = 0;
+	public float varB = 1;
 
-  public void setSeed(int seed) {
-    rand.setSeed(seed);
-  }
+	public Random rand;
 
-  int iteration = -1;
-  public int getIteration() {
-    return iteration;
-  }
+	public LSystem() {
+		rand = new Random();
+	}
 
-  int currentBackIndex = 0;
-  public int getCurrIndex() {
-    return currentBackIndex;
-  }
+	public void setAxiom(String a) {
+		axiom.clear();
+		for (int i = 0; i < a.length(); i++) {
+			axiom.add(a.charAt(i));
+		}
+	}
 
-  String backstate = "";
-  String nextstate = "";
+	public void setAlphabet(String a) {
+		alphabet.clear();
+		for (int i = 0; i < a.length(); i++) {
+			alphabet.add(a.charAt(i));
+		}
+	}
 
-  public String getState() {
-    return this.backstate;
-  }
+	public void setSeed(int seed) {
+		rand.setSeed(seed);
+	}
 
-  public String getCurrentState() {
-    return this.nextstate;
-  }
+	int iteration = -1;
 
-  HashMap<String, LSRuleSet> rules = new HashMap<String, LSRuleSet>();
+	public int getIteration() {
+		return iteration;
+	}
 
-  //technically, one could decide to step through the full "backstate" sentence processing continuously
-  //But do it all at once with the next() function
-  public void step() {
+	int currentBackIndex = 0;
 
-    if (iteration <0) {
-      reset();
-      iteration = 0;
-    }
+	public int getCurrIndex() {
+		return currentBackIndex;
+	}
 
-    int len = backstate.length();
+	public ArrayList<Character> getState() {
+		return this.backstate;
+	}
 
-    if (currentBackIndex > len - 1) {
-      backstate = nextstate+"";
-      nextstate = "";
-      currentBackIndex = 0;
-      iteration++;
-      return;
-    }
+	public ArrayList<Character> getCurrentState() {
+		return this.nextstate;
+	}
+	
+	void nextToBack() {
+		backstate.clear();
+		backstate.addAll(nextstate);
+		nextstate.clear();
+	}
 
-    String c = backstate.substring(currentBackIndex, currentBackIndex + 1);
-    nextstate += evaluate(c);
+	// technically, one could decide to step through the full "backstate" sentence
+	// processing continuously
+	// But do it all at once with the next() function
+	public void step() {
 
-    currentBackIndex++;
-  }
+		if (iteration < 0) {
+			reset();
+			iteration = 0;
+		}
 
-  public void process(int iter) {
-    reset();
-    while (iter != iteration) {
-      step();
-    }
-  }
+		int len = backstate.size();
 
-  //process the entire current state with the rules
-  public void next() {
+		if (currentBackIndex > len - 1) {
+			nextToBack();
+			currentBackIndex = 0;
+			iteration++;
+			return;
+		}
 
-    if (iteration <0) {
-      reset();
-      iteration = 0;
-    }
+		Character c = backstate.get(currentBackIndex);
+		nextstate.addAll(evaluate(c));
 
-    int currentIteration = iteration;
-    while (currentIteration == iteration) {
-      step();
-    }
-  }
+		currentBackIndex++;
+	}
 
+	public void process(int iter) {
+		reset();
+		while (iter != iteration) {
+			step();
+		}
+	}
 
-  //evaluate given 'c' input against rules
-  public String evaluate(String c) {
+	// process the entire current state with the rules
+	public void next() {
 
-    if (!alphabet.contains(c))
-    {
-      println("Bad char found '"+c+"' , make sure the alphabet is complete!");
-      return c;
-    }
+		if (iteration < 0) {
+			reset();
+			iteration = 0;
+		}
 
-    LSRuleSet rs = rules.get(c);
-    if (rs != null) {
-      LSRule r = rs.getRule();
-      return r.out;
-    }
+		int currentIteration = iteration;
+		while (currentIteration == iteration) {
+			step();
+		}
+	}
+	
+	ArrayList<Character> results = new ArrayList<Character>();
 
-    return c;
-  }
+	// evaluate given 'c' input against rules
+	public ArrayList<Character> evaluate(Character c) {
 
-  public void addRule(String in, String out) {
-    addRule(in, out, 1f);
-  }
+		results.clear();
+		results.add(c);
+		
+		if (!alphabet.contains(c)) {
+			println("Bad char found '" + c + "' , make sure the alphabet is complete!");
+			return results;
+		}
 
-  public void addRule(String in, String out, float chance) {
-    LSRule r = new LSRule();
-    r.out = out.trim();
-    r.chance = chance;
-    String i = in.trim();
-    LSRuleSet rs = rules.get(i);
-    if (rs == null) {
-      rs = new LSRuleSet(this);
-      rules.put(i, rs);
-    }
-    rs.addRule(r);
-  }
+		LSRuleSet rs = rules.get(c);
+		if (rs != null) {
+			LSRule r = rs.getRule();
+			return r.out;
+		}
 
-  public void clearRules() {
-    rules.clear();
-  }
+		return results;
+	}
 
-  public void reset() {
-    iteration = -1;
-    currentBackIndex = 0;
-    backstate = axiom;
-    nextstate = "";
-  }
+	public void addRule(String in, String out) {
+		addRule(in, out, 1f);
+	}
+
+	public void addRule(String in, String out, float chance) {
+		
+		if(in.length() > 1)
+		{
+			println("Not adding rule " + in + " because input is longer than one char.");
+			return;
+		}
+		
+		LSRule r = new LSRule();
+		
+		out = out.trim();
+		
+		r.out.clear();
+		
+		for(int i = 0; i < out.length(); i++) {
+			r.out.add(out.charAt(i));
+		}
+
+		r.chance = chance;
+		
+		Character i = in.trim().charAt(0);
+		
+		LSRuleSet rs = rules.get(i);
+		if (rs == null) {
+			rs = new LSRuleSet(this);
+			rules.put(i, rs);
+		}
+		rs.addRule(r);
+	}
+
+	public void clearRules() {
+		rules.clear();
+	}
+
+	public void reset() {
+		iteration = -1;
+		currentBackIndex = 0;
+		backstate.clear();
+		backstate.addAll(axiom);
+		nextstate.clear();
+	}
 }
 
 class LSRuleSet {
-  LSystem sys;
-  ArrayList<LSRule> rules = new ArrayList<LSRule>();
-  float totalW = 0;
+	LSystem sys;
+	ArrayList<LSRule> rules = new ArrayList<LSRule>();
+	float totalW = 0;
 
-  public LSRuleSet(LSystem s) {
-    this.sys = s;
-  }
+	public LSRuleSet(LSystem s) {
+		this.sys = s;
+	}
 
-  public void addRule(LSRule r) {
-    rules.add(r);
-    calcWeights();
-  }
+	public void addRule(LSRule r) {
+		rules.add(r);
+		calcWeights();
+	}
 
-  void calcWeights() {
-    totalW = 0;
+	void calcWeights() {
+		totalW = 0;
 
-    for (LSRule r : rules)
-      totalW += r.chance;
-  }
+		for (LSRule r : rules)
+			totalW += r.chance;
+	}
 
-  public LSRule getRule() {
-    if (rules.size() == 1) {
-      return rules.get(0);
-    }
+	public LSRule getRule() {
+		if (rules.size() == 1) {
+			return rules.get(0);
+		}
 
-    double random = sys.rand.nextDouble() * totalW;
-    int randomIndex = 0;
-    for (int i = 0; i < rules.size(); ++i)
-    {
-      random -= rules.get(i).chance;
-      if (random <= 0.0d)
-      {
-        randomIndex = i;
-        break;
-      }
-    }
+		double random = sys.rand.nextDouble() * totalW;
+		int randomIndex = 0;
+		for (int i = 0; i < rules.size(); ++i) {
+			random -= rules.get(i).chance;
+			if (random <= 0.0d) {
+				randomIndex = i;
+				break;
+			}
+		}
 
-    return rules.get(randomIndex);
-  }
+		return rules.get(randomIndex);
+	}
 }
 
 class LSRule {
-  public float chance = 1;
-  public String out = "";
+	public float chance = 1;
+	public ArrayList<Character> out = new ArrayList<Character>();
 }
