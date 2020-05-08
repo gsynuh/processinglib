@@ -2,11 +2,17 @@ import gsynlib.utils.LSystem;
 
 LSystem sys;
 
+
+
 PVector startDrawPoint = new PVector();
 PImage overlayimg;
 
+byte[] cov19seq;
+
 void setup() {
-  size(900, 900,FX2D);
+  fullScreen(FX2D, 2);
+
+  cov19seq = loadBytes("sarscov2-2019_NC_045512_300320.txt");
 
   overlayimg = createImage(width, height, ARGB);
   overlayimg.loadPixels();
@@ -20,65 +26,63 @@ void setup() {
   }
   overlayimg.updatePixels();
 
-  frameRate(15);
+  frameRate(60);
 
   sys = new LSystem();
   sys.setSeed(round(random(10000)));
   sys.varB = 3;
 
-  initPreset(4);
-
+  sys.setAlphabet("TFGABCXY+-[]/*!R01234");
+  initPreset(7);
 }
 
 void initPreset(int i) {
 
-  //preset examples at : https://en.wikipedia.org/wiki/L-system
+  sys.clearRules();
+  sys.reset();
+  //some preset examples at : https://en.wikipedia.org/wiki/L-system
 
   if (i == 1) {
 
     //Sierpiński arrowhead curve L-system
-    sys.setAlphabet("AB-+");
     sys.setAxiom("A");
 
     sys.addRule("A", "B-A-B");
     sys.addRule("B", "A+B+A");
 
-    sys.varA = radians(60);
+    sys.varA = PI/3;
 
     startDrawPoint.set(width/2, height-50);
   } else if (i == 2) {
 
     //Dragon curve
-    sys.setAlphabet("XYF+-");
     sys.setAxiom("FX");
 
     sys.addRule("X", "X+YF+");
     sys.addRule("Y", "-FX-Y");
 
-    sys.varA = radians(90);
+    sys.varA = PI/2;
 
     startDrawPoint.set(width/2, height/2-50);
   } else if (i == 3) {
 
-    //Test
-    sys.setAlphabet("FABX+-[]");
+    //Dragon curve custom 
     sys.setAxiom("X");
 
-    sys.addRule("X", "B[+X+A]-[+A[XF]-B]-[-B+X]-F");
+    sys.addRule("X", "[B[+TA-X]CF[X-FB]]TT[-TATCF-TX]+ATX");
+    sys.addRule("F", "FF");
+    sys.addRule("T", "FF");
 
-    sys.addRule("F", "FFB");
-    sys.addRule("F", "FFX");
+    sys.addRule("A", "F+FF[--F]+F");
+    sys.addRule("B", "-F");
+    sys.addRule("C", "-F[X]");
 
-    sys.addRule("B", "BB");
-    sys.addRule("A", "AAB+");
-
-    sys.varA = radians(60);
-    sys.varB  = 5;
-    startDrawPoint.set(width*0.5, height*0.7);
+    sys.varA = PI/3;
+    sys.varB  = 1;
+    startDrawPoint.set(width*0.5, height*0.6);
   } else if (i == 4) {
 
     //Tree
-    sys.setAlphabet("!RF+-[]");
     sys.setAxiom("F");
 
     sys.addRule("F", "FF+[!+F-RFR-F]-[-!+RFR+F]");
@@ -90,21 +94,56 @@ void initPreset(int i) {
     sys.varA = radians(25);
     sys.varB  = 4;
     startDrawPoint.set(width*0.25, height*0.9);
-  }else if (i == 5) {
+  } else if (i == 5) {
 
     //Fract
-    sys.setAlphabet("F-+[]");
     sys.setAxiom("F-F-F-F");
 
     sys.addRule("F", "F[F]-F+F[--F]+F-F");
 
-    sys.varA = radians(90);
+    sys.varA = PI/2;
     sys.varB  = 10;
     startDrawPoint.set(width*0.9, height*0.9);
+  } else if (i == 6) {
+
+    //SARS COV 2 AS BASE RULES ?
+
+    String cov = new String(cov19seq);
+    cov = cov.toUpperCase();
+
+    println("nucleotides:", cov.length());
+    sys.setAxiom("0+"+cov);
+
+    sys.addRule("A", "0+F");
+    sys.addRule("T", "0-F");
+    sys.addRule("C", "1F");
+    sys.addRule("G", "2F");
+
+    sys.varA = PI/6;
+    sys.varB  = 0.7;
+    startDrawPoint.set(width*0.5, height*0.9);
+  } else if (i == 7) {
+
+    //TREE2 made by gsynuh
+    sys.setAxiom("X");
+
+    sys.addRule("X", "FG[GX-F][[+AB][-BFA][A+AB!--BC]![A-A+B+C]]FG");
+
+    sys.addRule("A", "A[-X][+X]B");
+    sys.addRule("B", "B[+X][-X]A");
+    sys.addRule("F", "FF");
+
+    sys.addRule("G", "F[+X]C");
+    sys.addRule("C", "F[-X]G");
+
+    sys.addRule("!", "R[RF]");
+
+    sys.varA = radians(25);
+    sys.varB  = 3;
+    startDrawPoint.set(width*0.5, height*0.9);
   } else {
 
     //Fern
-    sys.setAlphabet("XF+-[]");
     sys.setAxiom("X");
 
     sys.addRule("X", "F+[[X]-X]-F[-FX]+X");
@@ -116,19 +155,29 @@ void initPreset(int i) {
   }
 }
 
+Boolean autoplay = false;
+
 void keyPressed() {
-  
-  if(keyCode == LEFT) {
+
+  int i = parseInt(key);
+  i -= 48;
+  if (i > -1 && i < 10) {
+    initPreset(i);
+    loop();
+    return;
+  }
+
+  if (keyCode == LEFT) {
     int iter = sys.getIteration();
-    if(iter > 0) {
+    if (iter -1 >= 0) {
       sys.process(iter - 1);
     }
     loop();
     return;
   }
-  
-  if(keyCode == RIGHT) {
-    sys.step();
+
+  if (keyCode == RIGHT) {
+    autoplay = !autoplay;
     loop();
     return;
   }
@@ -148,37 +197,64 @@ void mousePressed() {
   loop();
 }
 
-void draw() {
+void draw() {  
   blendMode(NORMAL);
   background(255);
+
+  /*
+  pushStyle();
+   fill(190); 
+   int s = 10;
+   textSize(s);
+   textLeading(s+1); 
+   String code = sys.getStateString();
+   text(code,10,10,width-20,height-20);
+   popStyle();
+   */
 
   pushMatrix();
   pushStyle();
 
+  int alpha = 200;
+
   //initial drawing conditions
-  stroke(64, 127);
+  stroke(64,alpha);
   strokeWeight(0.8);
   translate(startDrawPoint.x, startDrawPoint.y);
 
+  float a = sys.varA;
+  float b = sys.varB;
+
   int pushedMatrices = 0;
-  ArrayList<Character> state = sys.getCurrentState(); // IN PROGRESS STATE
-  
-  if(state.size() == 0) //IN PROGRESS STATE DOESNT EXIST, OR IS DONE
-    state = sys.getState(); //GRAB FULL STATE
-    
+  ArrayList<Character> state = sys.getState();
 
   for (int i = 0; i < state.size(); i++) {
 
     char c = state.get(i);
 
+    float x = 0;
+    float y = -b;
+
     switch(c) {
+    case '0':
+      strokeWeight(0.8);
+      stroke(64,alpha);
+      break;
     case '1':
-    strokeWeight(0.8);
-      stroke(64, 127);
+      strokeWeight(1.1);
+      stroke(0, 255, 0,alpha);
       break;
     case '2':
-    strokeWeight(1.1);
-      stroke(255, 0, 0,127);
+      strokeWeight(1.1);
+      stroke(255, 0, 0,alpha);
+      break;
+    case '3':
+      strokeWeight(1.1);
+      stroke(0, 0, 255);
+      break;
+    case '4':
+      strokeWeight(1.1);
+      stroke(255, 0, 255);
       break;
     case '[':
       pushMatrix();
@@ -190,35 +266,40 @@ void draw() {
       break;
     case 'A':
     case 'B':
+    case 'C':
     case 'F':
-
-      float x = 0;
-      float y = -sys.varB;
-
       line(0, 0, x, y);
+    case 'T':
       translate(x, y);
       break;
     case '-':
-      rotate(-sys.varA);
+      rotate(-a);
       break;
     case '+':
-      rotate(sys.varA);
+      rotate(a);
       break;
     case 'R':
       float r = (float)sys.rand.nextDouble();
-      r = map(r, 0, 1, -sys.varA*0.5, sys.varA*0.5);
+      r = map(r, 0, 1, -a*0.25, a*0.25);
       rotate(r);
       break;
+    case 'Y':
     case 'X':
       //NO OP
       break;
+    case '/':
+      b/=2;
+      break;
+    case '*':
+      b*=2;
+      break;
     }
   }
-  
-  if(pushedMatrices > 0)
-  for(int i = 0; i < pushedMatrices; i++){
-    popMatrix();
-  }
+
+  if (pushedMatrices > 0)
+    for (int i = 0; i < pushedMatrices; i++) {
+      popMatrix();
+    }
 
   popMatrix();
   popStyle();
@@ -226,7 +307,10 @@ void draw() {
   //debug display
   fill(255);
   noStroke();
+
+
   rect(0, height-30, width, 30);
+
   fill(64);
   text("iteration:"+sys.getIteration()+ " step:" + sys.getCurrIndex() + " cmds:" + state.size() + " seed:" + sys.getSeed(), 10, height-12);
 
@@ -240,4 +324,9 @@ void draw() {
   popMatrix();
 
   noLoop();
+
+  if (autoplay) {
+    sys.step();
+    loop();
+  }
 }

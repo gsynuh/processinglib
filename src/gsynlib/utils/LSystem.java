@@ -64,11 +64,29 @@ public class LSystem {
 	}
 
 	public ArrayList<Character> getState() {
-		return this.backstate;
+		if(this.nextstate.size()>0)
+			return this.nextstate;
+		else
+			return this.backstate;
 	}
 
-	public ArrayList<Character> getCurrentState() {
-		return this.nextstate;
+	StringBuffer b = new StringBuffer();
+	public String getStateString() {
+		ArrayList<Character> s = getState();
+		
+		b.delete(0, b.length());
+		int cu = 0;
+		for(Character c : s) {
+			
+			b.append(c);
+			
+			cu++;
+			
+			if(cu > 100000)
+				break;
+		}
+		
+		return b.toString();
 	}
 	
 	void nextToBack() {
