@@ -17,6 +17,7 @@ public class LSystem {
 	public float varA = 0;
 	public float varB = 1;
 
+	public int seed = 0;
 	public Random rand;
 
 	public LSystem() {
@@ -36,9 +37,18 @@ public class LSystem {
 			alphabet.add(a.charAt(i));
 		}
 	}
+	
+	public int getSeed() {
+		return this.seed;
+	}
 
 	public void setSeed(int seed) {
+		this.seed = seed;
 		rand.setSeed(seed);
+		
+		if(this.iteration > 0) {
+			this.process(iteration);
+		}
 	}
 
 	int iteration = -1;
@@ -176,6 +186,9 @@ public class LSystem {
 	public void reset() {
 		iteration = -1;
 		currentBackIndex = 0;
+		
+		this.setSeed(this.seed);
+		
 		backstate.clear();
 		backstate.addAll(axiom);
 		nextstate.clear();

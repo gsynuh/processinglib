@@ -7,13 +7,11 @@ PVector startDrawPoint = new PVector();
 void setup() {
   size(900, 900);
 
-  frameRate(5);
-
   sys = new LSystem();
   sys.setSeed(round(random(10000)));
   sys.varB = 3;
 
-  initPreset(3);
+  initPreset(4);
 
   //advance straight to iteration 3
   sys.process(3);
@@ -68,6 +66,21 @@ void initPreset(int i) {
     sys.varB  = 4;
     startDrawPoint.set(width*0.75, height*0.75);
     
+  }else if (i == 4) {
+
+    sys.setAlphabet("!F+-[]");
+    sys.setAxiom("F");
+
+    sys.addRule("F", "FF+[!+F-F-F]-[-!+F+F]");
+    
+    sys.addRule("!", "F",0.6);
+    sys.addRule("!", "+[F]",0.2);
+    sys.addRule("!", "-[F]",0.2);
+
+    sys.varA = radians(25);
+    sys.varB  = 3;
+    startDrawPoint.set(width*0.25, height*0.9);
+    
   } else {
 
     //Fern
@@ -84,11 +97,20 @@ void initPreset(int i) {
 }
 
 void keyPressed() {
+  
+  if(keyCode == 82) {
+    sys.setSeed(round(random(10000)));
+    loop();
+    return;
+  }
+  
   sys.reset();
+  loop();
 }
 
 void mousePressed() {
   sys.next();
+  loop();
 }
 
 void draw() {
@@ -98,7 +120,7 @@ void draw() {
   pushStyle();
 
   //initial drawing conditions
-  stroke(64);
+  stroke(32,90);
   strokeWeight(0.8);
   translate(startDrawPoint.x, startDrawPoint.y);
 
@@ -138,5 +160,7 @@ void draw() {
 
   //debug display
   fill(32);
-  text("iteration:"+sys.getIteration()+ " step:" + sys.getCurrIndex(), 10, height-12);
+  text("iteration:"+sys.getIteration()+ " step:" + sys.getCurrIndex() + " seed:" + sys.getSeed(), 10, height-12);
+
+  noLoop();
 }
