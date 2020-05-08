@@ -15,12 +15,10 @@ void setup() {
       int i = x + y*overlayimg.width;
       float bw = random(1) < 0.5 ? 0 : 1;
 
-      overlayimg.pixels[i] = color(bw<0.5? 64 : 255, random(0, 80));
+      overlayimg.pixels[i] = color(bw<0.5? 64 : 255, random(0, 75));
     }
   }
   overlayimg.updatePixels();
-
-
 
   frameRate(15);
 
@@ -28,10 +26,8 @@ void setup() {
   sys.setSeed(round(random(10000)));
   sys.varB = 3;
 
-  initPreset(3);
+  initPreset(4);
 
-  //advance straight to iteration 4
-  sys.process(4);
 }
 
 void initPreset(int i) {
@@ -94,6 +90,17 @@ void initPreset(int i) {
     sys.varA = radians(25);
     sys.varB  = 4;
     startDrawPoint.set(width*0.25, height*0.9);
+  }else if (i == 5) {
+
+    //Fract
+    sys.setAlphabet("F-+[]");
+    sys.setAxiom("F-F-F-F");
+
+    sys.addRule("F", "F[F]-F+F[--F]+F-F");
+
+    sys.varA = radians(90);
+    sys.varB  = 10;
+    startDrawPoint.set(width*0.9, height*0.9);
   } else {
 
     //Fern
@@ -110,6 +117,21 @@ void initPreset(int i) {
 }
 
 void keyPressed() {
+  
+  if(keyCode == LEFT) {
+    int iter = sys.getIteration();
+    if(iter > 0) {
+      sys.process(iter - 1);
+    }
+    loop();
+    return;
+  }
+  
+  if(keyCode == RIGHT) {
+    sys.step();
+    loop();
+    return;
+  }
 
   if (keyCode == 82) {
     sys.setSeed(round(random(10000)));
@@ -138,7 +160,12 @@ void draw() {
   strokeWeight(0.8);
   translate(startDrawPoint.x, startDrawPoint.y);
 
-  ArrayList<Character> state = sys.getState();
+  int pushedMatrices = 0;
+  ArrayList<Character> state = sys.getCurrentState(); // IN PROGRESS STATE
+  
+  if(state.size() == 0) //IN PROGRESS STATE DOESNT EXIST, OR IS DONE
+    state = sys.getState(); //GRAB FULL STATE
+    
 
   for (int i = 0; i < state.size(); i++) {
 
@@ -155,9 +182,11 @@ void draw() {
       break;
     case '[':
       pushMatrix();
+      pushedMatrices++;
       break;
     case ']':
       popMatrix();
+      pushedMatrices--;
       break;
     case 'A':
     case 'B':
@@ -185,6 +214,11 @@ void draw() {
       break;
     }
   }
+  
+  if(pushedMatrices > 0)
+  for(int i = 0; i < pushedMatrices; i++){
+    popMatrix();
+  }
 
   popMatrix();
   popStyle();
@@ -193,7 +227,7 @@ void draw() {
   fill(255);
   noStroke();
   rect(0, height-30, width, 30);
-  fill(32);
+  fill(64);
   text("iteration:"+sys.getIteration()+ " step:" + sys.getCurrIndex() + " cmds:" + state.size() + " seed:" + sys.getSeed(), 10, height-12);
 
   //overlay
