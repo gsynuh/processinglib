@@ -97,7 +97,14 @@ public class LSystem {
 		}
 
 		Character c = backstate.get(currentBackIndex);
-		nextstate.addAll(evaluate(c));
+		ArrayList<Character> e = evaluate(c);
+		
+		for(Character ec : e) {
+			if(ec == null)
+				continue;
+			
+			nextstate.add(ec);
+		}
 
 		currentBackIndex++;
 	}
