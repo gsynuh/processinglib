@@ -5,7 +5,7 @@ LSystem sys;
 PVector startDrawPoint = new PVector();
 
 void setup() {
-  size(800, 800);
+  size(900, 900);
 
   frameRate(5);
 
@@ -28,19 +28,27 @@ void initPreset(int i) {
     //Sierpiński arrowhead curve L-system
     sys.setAlphabet("AB-+");
     sys.setAxiom("A");
+    
     sys.addRule("A", "B-A-B");
     sys.addRule("B", "A+B+A");
+    
     sys.varA = radians(60);
+    
     startDrawPoint.set(width/2, height-50);
+    
   } else if (i == 2) {
 
     //Dragon curve
     sys.setAlphabet("XYF+-");
     sys.setAxiom("FX");
+    
     sys.addRule("X", "X+YF+");
     sys.addRule("Y", "-FX-Y");
+    
     sys.varA = radians(90);
+    
     startDrawPoint.set(width/2, height/2-50);
+    
   } else if (i == 3) {
 
     //Test
@@ -57,16 +65,20 @@ void initPreset(int i) {
     sys.addRule("F", "-[FA]+");
 
     sys.varA = radians(120);
-    sys.varB  = 2;
+    sys.varB  = 4;
     startDrawPoint.set(width*0.75, height*0.75);
+    
   } else {
 
     //Fern
     sys.setAlphabet("XF+-[]");
     sys.setAxiom("X");
+    
     sys.addRule("X", "F+[[X]-X]-F[-FX]+X");
     sys.addRule("F", "FF");
+    
     sys.varA = radians(25);
+    
     startDrawPoint.set(width/2, height-50);
   }
 }
