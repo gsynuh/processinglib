@@ -9,6 +9,9 @@ PImage overlayimg;
 
 byte[] cov19seq;
 
+color backColor;
+color frontColor;
+
 void setup() {
   fullScreen(FX2D, 2);
 
@@ -21,7 +24,7 @@ void setup() {
       int i = x + y*overlayimg.width;
       float bw = random(1) < 0.5 ? 0 : 1;
 
-      overlayimg.pixels[i] = color(bw<0.5? 64 : 255, random(0, 75));
+      overlayimg.pixels[i] = color(bw<0.5? 0 : 255, random(0, 32));
     }
   }
   overlayimg.updatePixels();
@@ -33,11 +36,14 @@ void setup() {
   sys.varB = 3;
 
   sys.setAlphabet("TFGABCDXY+-[]/*!R01234");
-  initPreset(8);
+  initPreset(9);
 }
 
 void initPreset(int i) {
 
+  backColor = color(248);
+  frontColor = color(64);
+  
   sys.clearRules();
   sys.reset();
   //some preset examples at : https://en.wikipedia.org/wiki/L-system
@@ -167,6 +173,27 @@ void initPreset(int i) {
     sys.varA = radians(60);
     sys.varB  = 2;
     startDrawPoint.set(width*0.5, height*0.75);
+  } else if (i == 9) {
+    
+    sys.setAxiom("X");
+    
+    sys.addRule("X", "[X][TA]-[TA]-[TA]-[TA]-[TA]-[TA]");
+    
+    sys.addRule("A","[XB[TT-X]F]");
+    
+    sys.addRule("B","F+[F-FA]");
+    sys.addRule("B","F-[F+FA]");
+    
+    sys.addRule("F","FF");
+    sys.addRule("T","TT");
+    
+    sys.varA = PI/3;
+    sys.varB  = 5;
+    startDrawPoint.set(width*0.5, height*0.5);
+    
+    backColor = color(220);
+    frontColor = color(120);
+    
   } else {
 
     //Fern
@@ -224,8 +251,9 @@ void mousePressed() {
 }
 
 void draw() {  
+  
+  background(backColor);
   blendMode(NORMAL);
-  background(255);
 
   /*
   pushStyle();
@@ -244,7 +272,7 @@ void draw() {
   int alpha = 200;
 
   //initial drawing conditions
-  stroke(64, alpha);
+  stroke(frontColor, alpha);
   strokeWeight(0.8);
   translate(startDrawPoint.x, startDrawPoint.y);
 
@@ -332,22 +360,25 @@ void draw() {
   popStyle();
 
   //debug display
-  fill(255);
+  fill(backColor);
   noStroke();
 
 
   rect(0, height-30, width, 30);
 
-  fill(64);
+  fill(frontColor);
   text("iteration:"+sys.getIteration()+ " step:" + sys.getCurrIndex() + " cmds:" + state.size() + " seed:" + sys.getSeed(), 10, height-12);
 
   //overlay
   pushMatrix();
   float sX = width / (float)overlayimg.width;
   float sY = height / (float)overlayimg.height;
-  blendMode(ADD);
+
   scale(sX, sY);
+  blendMode(ADD);
   image(overlayimg, 0, 0);
+  //blendMode(NORMAL);
+  //image(overlayimg, 0, 0);
   popMatrix();
 
   noLoop();
