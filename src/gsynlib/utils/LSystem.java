@@ -5,7 +5,7 @@ import java.util.*;
 import static processing.core.PApplet.*;
 
 public class LSystem {
-
+	
 	ArrayList<Character> alphabet = new ArrayList<Character>();
 	ArrayList<Character> axiom = new ArrayList<Character>();
 

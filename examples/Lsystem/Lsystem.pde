@@ -32,8 +32,8 @@ void setup() {
   sys.setSeed(round(random(10000)));
   sys.varB = 3;
 
-  sys.setAlphabet("TFGABCXY+-[]/*!R01234");
-  initPreset(7);
+  sys.setAlphabet("TFGABCDXY+-[]/*!R01234");
+  initPreset(8);
 }
 
 void initPreset(int i) {
@@ -53,6 +53,7 @@ void initPreset(int i) {
     sys.varA = PI/3;
 
     startDrawPoint.set(width/2, height-50);
+    
   } else if (i == 2) {
 
     //Dragon curve
@@ -64,6 +65,7 @@ void initPreset(int i) {
     sys.varA = PI/2;
 
     startDrawPoint.set(width/2, height/2-50);
+    
   } else if (i == 3) {
 
     //Dragon curve custom 
@@ -80,6 +82,7 @@ void initPreset(int i) {
     sys.varA = PI/3;
     sys.varB  = 1;
     startDrawPoint.set(width*0.5, height*0.6);
+    
   } else if (i == 4) {
 
     //Tree
@@ -94,6 +97,7 @@ void initPreset(int i) {
     sys.varA = radians(25);
     sys.varB  = 4;
     startDrawPoint.set(width*0.25, height*0.9);
+    
   } else if (i == 5) {
 
     //Fract
@@ -104,6 +108,7 @@ void initPreset(int i) {
     sys.varA = PI/2;
     sys.varB  = 10;
     startDrawPoint.set(width*0.9, height*0.9);
+    
   } else if (i == 6) {
 
     //SARS COV 2 AS BASE RULES ?
@@ -122,6 +127,7 @@ void initPreset(int i) {
     sys.varA = PI/6;
     sys.varB  = 0.7;
     startDrawPoint.set(width*0.5, height*0.9);
+    
   } else if (i == 7) {
 
     //TREE2 made by gsynuh
@@ -141,6 +147,26 @@ void initPreset(int i) {
     sys.varA = radians(25);
     sys.varB  = 3;
     startDrawPoint.set(width*0.5, height*0.9);
+    
+  } else if (i == 8) {
+
+    sys.setAxiom("X");
+
+    sys.addRule("X", "[-X][+X]A+B+C-BTB-A-D+A+B-A-D[+X]D-C+B+A");
+    
+    sys.addRule("A", "+F[C-X]F[-[TFTFTFFF-[X]]+[FT]]");
+    sys.addRule("B", "-F[+TXFTF]F");
+    sys.addRule("C", "F[T-TFTX]F");
+    sys.addRule("D", "F[T+A]F");
+   
+    sys.addRule("F", "FF");
+    
+    sys.addRule("T", "TFTFT");
+    sys.addRule("T", "FTFT");
+ 
+    sys.varA = radians(60);
+    sys.varB  = 2;
+    startDrawPoint.set(width*0.5, height*0.75);
   } else {
 
     //Fern
@@ -218,7 +244,7 @@ void draw() {
   int alpha = 200;
 
   //initial drawing conditions
-  stroke(64,alpha);
+  stroke(64, alpha);
   strokeWeight(0.8);
   translate(startDrawPoint.x, startDrawPoint.y);
 
@@ -238,15 +264,15 @@ void draw() {
     switch(c) {
     case '0':
       strokeWeight(0.8);
-      stroke(64,alpha);
+      stroke(64, alpha);
       break;
     case '1':
       strokeWeight(1.1);
-      stroke(0, 255, 0,alpha);
+      stroke(0, 255, 0, alpha);
       break;
     case '2':
       strokeWeight(1.1);
-      stroke(255, 0, 0,alpha);
+      stroke(255, 0, 0, alpha);
       break;
     case '3':
       strokeWeight(1.1);
@@ -267,6 +293,7 @@ void draw() {
     case 'A':
     case 'B':
     case 'C':
+    case 'D':
     case 'F':
       line(0, 0, x, y);
     case 'T':
