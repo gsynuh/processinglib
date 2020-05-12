@@ -16,7 +16,8 @@ public class LSystem {
 
 	public float varA = 0;
 	public float varB = 1;
-
+	public float startAngle = 0;
+	
 	public int seed = 0;
 	public Random rand;
 

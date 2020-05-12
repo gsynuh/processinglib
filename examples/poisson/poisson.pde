@@ -71,9 +71,7 @@ void draw() {
 
     fill(0, 255, 255, 20);
     noStroke();
-    //ellipse(p.x, p.y, minDistance*2, minDistance*2);
-
-
+    
     if (highlights.contains(i)) {
       strokeWeight(5);
       stroke(0,255,255);

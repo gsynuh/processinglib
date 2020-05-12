@@ -2,8 +2,6 @@ import gsynlib.utils.LSystem;
 
 LSystem sys;
 
-
-
 PVector startDrawPoint = new PVector();
 PImage overlayimg;
 
@@ -43,6 +41,9 @@ void initPreset(int i) {
 
   backColor = color(248);
   frontColor = color(64);
+  
+  sys.varB  = 2;
+  sys.startAngle = 0;
   
   sys.clearRules();
   sys.reset();
@@ -194,6 +195,18 @@ void initPreset(int i) {
     backColor = color(220);
     frontColor = color(120);
     
+  } else if (i == 10) {
+    
+    sys.setAxiom("X");   
+    
+    sys.addRule("X", "[[C]F[C]]+F[-C]");
+    sys.addRule("C", "/X*");
+
+    sys.varA = PI/3;
+    sys.varB  = 200;
+    sys.startAngle = -PI/2;
+    startDrawPoint.set(width*0.7, height*0.7);
+    
   } else {
 
     //Fern
@@ -216,6 +229,12 @@ void keyPressed() {
   i -= 48;
   if (i > -1 && i < 10) {
     initPreset(i);
+    loop();
+    return;
+  }
+  
+  if(key == 'A') {
+    initPreset(10);
     loop();
     return;
   }
@@ -275,6 +294,8 @@ void draw() {
   stroke(frontColor, alpha);
   strokeWeight(0.8);
   translate(startDrawPoint.x, startDrawPoint.y);
+  
+  rotate(sys.startAngle);
 
   float a = sys.varA;
   float b = sys.varB;
