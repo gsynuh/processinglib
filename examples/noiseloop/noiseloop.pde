@@ -15,7 +15,7 @@ void setup() {
 
 void drawTubes(float w) {
 
-  float gridSize = 12;
+  float gridSize = 8;
   float cellSize = w / gridSize;
   float totalFrames = 300;
 
@@ -25,7 +25,7 @@ void drawTubes(float w) {
       int id = floor(x%gridSize + y*gridSize);
 
       float frame = frameCount % totalFrames;
-      float z = timeLoop.get(id, frame/totalFrames) * 5;
+      float z = timeLoop.get(id, frame/totalFrames) * 2.5;
 
       beginShape();
       for (float i = 0; i <= numPoints; i++) {
@@ -53,5 +53,7 @@ void draw() {
   float m = width/12;
   translate(m, m);
   float w = width-m*2;
+  
+  noStroke();
   drawTubes(w);
 }
